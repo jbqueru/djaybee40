@@ -33,3 +33,44 @@ mistakenly believed that the switch to digital would imply that most
 computer users would be programmers. I that environment, I got my hands
 on a loaner CPC for a couple of months, and I taught myself some
 [BASIC](https://en.wikipedia.org/wiki/Locomotive_BASIC) programming.
+
+I got a loaner [TI 99/4A](https://en.wikipedia.org/wiki/TI-99/4A)
+before my family bought our own CPC, our first computer. I quickly
+realized that BASIC was not enough to rival commercial games,
+and I learned of a "mythical assembly" language that was much faster
+than BASIC. I eventually managed to import some assembly documentation
+from England (this was way before anything was available online) and
+did put together a few assembly instructions, but the lack of tools
+and guidance made me hit a wall.
+
+Somewhere along the way, I also used the
+[Thomson MO5](https://en.wikipedia.org/wiki/Thomson_MO5) in school,
+still in BASIC.
+
+In 1989, we got an [Atari ST](https://en.wikipedia.org/wiki/Atari_ST).
+Back to BASIC I went, using
+[GFA BASIC 2 and 3](https://en.wikipedia.org/wiki/GFA_BASIC),
+[STOS BASIC](https://en.wikipedia.org/wiki/STOS_BASIC) and even a French
+oddity called BASIC 1000D. 
+Mostly, though, in late 1990, through an unlikely chain of
+relationships, a friend taught me assembly for the
+[68000](https://en.wikipedia.org/wiki/Motorola_68000) and I never looked
+back. I coded for the Atari ST (including the STE variant), as well as the
+[Falcon](https://en.wikipedia.org/wiki/Atari_Falcon) (I even pushed to its
+[FPU](https://en.wikipedia.org/wiki/Motorola_68881)
+but never touched its [DSP](https://en.wikipedia.org/wiki/Motorola_56000)).
+
+At some point beyond that, I started to use computers with operating
+systems that mostly hid the hardware from me, and I lost contact with
+that kind of programming, I made the mistake of never diving into
+[OpenGL](https://en.wikipedia.org/wiki/OpenGL) enough, the last times
+I played with such methods of programming were with
+[BeOS](https://en.wikipedia.org/wiki/BeOS)' `BWindowScreen` and
+`BDirectWindow` APIs.
+
+Finally, along that path, my family did own a Sega Megadrive (with
+the Master System adapter), a Nintendo SNES, a pair of Atari Lynx,
+an Atari 7800, even an Atari Jaguar. I'm pretty sure that I did
+get to see a few other machines, Intellivision, ColecoVision, Vectrex,
+ZX81, Thomson MO and TO family, Amiga, and I know I've seen a few
+other machines in passing, TRS-80, ZX Spectrum, C64, Apple II.

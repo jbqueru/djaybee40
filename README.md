@@ -1,13 +1,16 @@
 # Djaybee's 40th
+
 A collection of little demos to celebrate Djaybee's 40th code-versary
+
 # Background
+
 I started programming in 1984, and I am using 2024 to celebrate 40 years
 of coding experience.
 
 This chapter explains how I started, which now guides how I intend to
 celebreate.
 
-## The BASIC beginnings
+### The BASIC beginnings
 
 Back in 1984, I was 10 years old, living in France.
 My family was not into computers, the closest we had was a
@@ -49,7 +52,7 @@ Somewhere along the way, I also used the
 [Thomson MO5](https://en.wikipedia.org/wiki/Thomson_MO5) in school,
 still in BASIC.
 
-## 68000 and assembly
+### 68000 and assembly
 
 In 1989, we got an [Atari ST](https://en.wikipedia.org/wiki/Atari_ST).
 Back to BASIC I went, using
@@ -73,7 +76,7 @@ of how much better I've become since then.
 I estimate that I wrote about 100,000 lines of assembly during that
 period.
 
-## Turning professional
+### Turning professional
 
 At some point beyond that, I started to use computers with operating
 systems that mostly hid the hardware from me, and I lost contact with
@@ -83,7 +86,7 @@ I played with such methods of programming were with
 [BeOS](https://en.wikipedia.org/wiki/BeOS)' `BWindowScreen` and
 `BDirectWindow` APIs.
 
-## Other things I've seen
+### Other things I've seen
 
 Along that path, my family did own a
 [Sega Mega Drive](https://en.wikipedia.org/wiki/Sega_Genesis) (with
@@ -110,3 +113,72 @@ and I know I've seen a few other machines in passing,
 [ZX Spectrum](https://en.wikipedia.org/wiki/ZX_Spectrum),
 [Commodore 64](https://en.wikipedia.org/wiki/Commodore_64),
 [Apple IIc](https://en.wikipedia.org/wiki/Apple_IIc).
+
+### Fast-forward to 2024
+
+In 1998-99, I relocated from Europe to the USA, since that's where
+I had been able to find a first job. I initially still coded a
+little bit on the side, but, quickly, coding for work took so
+many of my mental cycles that I couldn't manage to code on the side
+any longer.
+
+As the years went by (actually decades), my job took me in directions
+where I coded less and less, where I saw less and less code. The first
+year of the COVID pandemic was an opportunity to try to get back
+to 68000 assembly for the Atari ST, under emulation, and I found that
+I enjoyed that and that my professional experience helped me well.
+Since then, I've touched a variety of other processors and machines
+under emulation, which has been fun.
+
+In 2024, I am relocating from the USA back to Europe, for which I
+have been taking a career break. Since this year marks 40 years
+since I started programming, I figured that I would try to
+celebrate the anniversary.
+
+# The plan
+
+As I'm starting this project, my plan is to write some code for
+half a dozen hardware targets, initially aiming for some sort
+of scrolling text along with some sprites.
+
+## The hardware targets
+
+### Atari ST
+
+Obviously, Atari ST is on the list. It's been my starting point
+for assembly programming, I can't ignore it.
+
+### Amstrad CPC
+
+I'll go back to Amstrad, and, this time, I will manage to make it
+do something in assembly.
+
+### Atari 2600
+
+A unique architecture, where you've got to race the beam directly
+with the CPU. Arguably the ZX80 and ZX81 are more extreme in that
+domain, but racing the beam all the way requires to replace the
+built-in ROM, which is easy with an emulator but not quite in the
+spirit of those machines.
+
+### Atari 7800
+
+Another unique architecture, that has no framebuffer, no sprites,
+no tiles. I like that it seems to offer a twin challenge: getting
+something to work at all, and getting something optimized.
+
+### TBD 1: ColecoVision?
+
+I might target the ColecoVision. The TI 9918A graphics chip feels
+interesting, providing some unusual level of flexibility at a time
+when most systems would be hard-coded. Note that the Sega SG-1000
+is essentially a straight clone of the ColecoVision.
+
+### TBD 2
+
+I don't know what I might add in there. An option is to go back
+very far, I'm familiar with the hardware from the arcade _Space
+Invaders_. I could also touch Vectrex for something unusual,
+or Neo Geo some something that takes sprites to the extreme,
+or simply NES because of the love-hate relationship I have with
+that machine.

@@ -138,10 +138,10 @@ celebrate the anniversary.
 # The plan
 
 As I'm starting this project, my plan is to write some code for
-half a dozen hardware targets, initially aiming for some sort
+half a dozen targets, initially aiming for some sort
 of scrolling text along with some sprites.
 
-## The hardware targets
+## The targets
 
 ### Atari ST
 
@@ -167,18 +167,27 @@ Another unique architecture, that has no framebuffer, no sprites,
 no tiles. I like that it seems to offer a twin challenge: getting
 something to work at all, and getting something optimized.
 
-### TBD 1: ColecoVision?
+### TBD
 
-I might target the ColecoVision. The TI 9918A graphics chip feels
-interesting, providing some unusual level of flexibility at a time
-when most systems would be hard-coded. Note that the Sega SG-1000
-is essentially a straight clone of the ColecoVision.
+I have quite a range of choices here.
 
-### TBD 2
+One is to go for something based on the TI 9918A,
+which could be the ColecoVision
+(or the Sega SG-1000, which feels like a near-clone),
+or the TI 99/4A itself that I actually used in person;
+the chip is also used in the MSX, which could be an 
+attractive option since its sound chip is essentially
+the same as the ones in the Atari ST and Amstrad CPC.
 
-I don't know what I might add in there. An option is to go back
-very far, I'm familiar with the hardware from the arcade _Space
-Invaders_. I could also touch Vectrex for something unusual,
-or Neo Geo some something that takes sprites to the extreme,
-or simply NES because of the love-hate relationship I have with
-that machine.
+I could also go further back, e.g. I'm familiar with
+the hardware from the arcade _Space Invaders_, which
+goes back to 1976.
+
+I could touch other machines, e.g. the Vectrex for something
+unusual, or the Neo Geo as an extreme sprite-based approach,
+or simply the NES because I have a love-hate relationship
+with that machine and its rushed hardware.
+
+In another direction, I can look in the direction of fantasy
+consoles (PICO-8, TIC-80) or block-based programming (Scratch)
+or even somewhere at the intersection (MakeCode).

@@ -1,0 +1,286 @@
+; SPDX-License-Identifier: Apache-2.0
+;
+; Portions Copyright 2022 Jean-Baptiste M. "JBQ" "Djaybee" "jbqueru" Queru
+; Portions Copyright 2023 Jean-Baptiste M. "JBQ" "Djaybee" "jbqueru" Queru
+; Portions Copyright 2024 Jean-Baptiste M. "JBQ" "Djaybee" "jbqueru" Queru
+;
+; Licensed under the Apache License, Version 2.0 (the "License");
+; you may not use this file except in compliance with the License.
+; You may obtain a copy of the License at
+;
+;    http://www.apache.org/licenses/LICENSE-2.0
+;
+; Unless required by applicable law or agreed to in writing, software
+; distributed under the License is distributed on an "AS IS" BASIS,
+; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+; See the License for the specific language governing permissions and
+; limitations under the License.
+
+	.processor	6502
+
+; ############################
+; ############################
+; ###                      ###
+; ###  Hardware constants  ###
+; ###                      ###
+; ############################
+; ############################
+
+; -------------------------------
+; Start TIA registers
+_TIA_VSYNC	.equ	$00	; ......s.
+				;       |
+                                ;       +-- 1 = vsync on
+
+_TIA_VBLANK	.equ	$01	; gl....b.
+				; ||    |
+				; ||    +-- 1 = vblank on
+				; |+------- 1 = latch I4/I5 (joystick buttons)
+                                ; +-------- 1 = ground I0..I3 (paddle pots)
+
+_TIA_WSYNC	.equ	$02	; ........  write = wait for end of next line
+
+_TIA_RSYNC	.equ	$03	; ........  write = reset horizontal counter
+
+_TIA_NUSIZ0	.equ	$04	; ..ss.nnn
+				;   || |||
+				;   || +++- 101 = double-width
+				;   || +++- 111 = quad-width
+				;   || |||
+				;   || ||+- 1 = close sprite
+				;   || |+-- 1 = medium sprite
+				;   || +--- 1 = wide sprite
+                                ;   ++----- missile width = 1 << ss
+
+_TIA_NUSIZ1	.equ	$05	; see _TIA_NUSIZ0
+
+_TIA_COLUP0	.equ	$06	; cccclll.
+				; |||||||
+				; ||||+++-- luminance
+				; ++++----- color (0 = grey, 1..15 colors)
+
+_TIA_COLUP1	.equ	$07	; see _TIA_COLUP0
+
+_TIA_COLUPF	.equ	$08	; see _TIA_COLUP0
+
+_TIA_COLUBK	.equ	$09	; see _TIA_COLUP0
+
+_TIA_CTRLPF	.equ	$0A	; see _TIA_COLUP0
+
+_TIA_REFP0	.equ	$0B
+_TIA_REFP1	.equ	$0C
+_TIA_PF0	.equ	$0D
+_TIA_PF1	.equ	$0E
+_TIA_PF2	.equ	$0F
+_TIA_RESP0	.equ	$10
+_TIA_RESP1	.equ	$11
+_TIA_RESM0	.equ	$12
+_TIA_RESM1	.equ	$13
+_TIA_RESBL	.equ	$14
+_TIA_AUDC0	.equ	$15
+_TIA_AUDC1	.equ	$16
+_TIA_AUDF0	.equ	$17
+_TIA_AUDF1	.equ	$18
+_TIA_AUDV0	.equ	$19
+_TIA_AUDV1	.equ	$1A
+_TIA_GRP0	.equ	$1B
+_TIA_GRP1	.equ	$1C
+_TIA_ENAM0	.equ	$1D
+_TIA_ENAM1	.equ	$1E
+_TIA_ENABL	.equ	$1F
+_TIA_HMP0	.equ	$20
+_TIA_HMP1	.equ	$21
+_TIA_HMM0	.equ	$22
+_TIA_HMM1	.equ	$23
+_TIA_HMBL	.equ	$24
+_TIA_VDELP0	.equ	$25
+_TIA_VDELP1	.equ	$26
+_TIA_VDELBL	.equ	$27
+_TIA_RESMP0	.equ	$28
+_TIA_RESMP1	.equ	$29
+_TIA_HMOVE	.equ	$2A
+_TIA_HMCLR	.equ	$2B
+_TIA_CXCLR	.equ	$2C
+
+_TIA_CXM0P	.equ	$00
+_TIA_CXM1P	.equ	$01
+_TIA_CXP0FB	.equ	$02
+_TIA_CXP1FB	.equ	$03
+_TIA_CXM0FB	.equ	$04
+_TIA_CXM1FB	.equ	$05
+_TIA_CXBLPF	.equ	$06
+_TIA_CXPPMM	.equ	$07
+_TIA_INPT0	.equ	$08
+_TIA_INPT1	.equ	$09
+_TIA_INPT2	.equ	$0A
+_TIA_INPT3	.equ	$0B
+_TIA_INPT4	.equ	$0C
+_TIA_INPT5	.equ	$0D
+
+_TIA_CO_GRAY	.equ	$00
+_TIA_CO_GOLD	.equ	$10
+_TIA_CO_ORANGE	.equ	$20
+_TIA_CO_BRT_ORG	.equ	$30
+_TIA_CO_PINK	.equ	$40
+_TIA_CO_PURPLE	.equ	$50
+_TIA_CO_PUR_BLU	.equ	$60
+_TIA_CO_BLU_PUR	.equ	$70
+_TIA_CO_BLUE	.equ	$80
+_TIA_CO_LT_BLUE	.equ	$90
+_TIA_CO_TURQ	.equ	$A0
+_TIA_CO_GRN_BLU	.equ	$B0
+_TIA_CO_GREEN	.equ	$C0
+_TIA_CO_YLW_GRN	.equ	$D0
+_TIA_CO_ORG_GRN	.equ	$E0
+_TIA_CO_LT_ORG	.equ	$F0
+
+_TIA_LU_MIN	.equ	$00
+_TIA_LU_V_DARK	.equ	$02
+_TIA_LU_DARK	.equ	$04
+_TIA_LU_M_DARK	.equ	$06
+_TIA_LU_M_LIGHT	.equ	$08
+_TIA_LU_LIGHT	.equ	$0A
+_TIA_LU_V_LIGHT	.equ	$0C
+_TIA_LU_MAX	.equ	$0E
+; End TIA registers
+; -------------------------------
+
+; -------------------------------
+; Start RIOT registers
+_RIOT_DATA_A	.equ	$280
+_RIOT_DDR_A	.equ	$281
+_RIOT_DATA_B	.equ	$282
+_RIOT_DDR_B	.equ	$283
+
+_RIOT_WT1T	.equ	$294
+_RIOT_WT8T	.equ	$295
+_RIOT_WT64T	.equ	$296
+_RIOT_WT1024T	.equ	$297
+
+_RIOT_RTIM	.equ	$284
+; End RIOT registers
+; -------------------------------
+
+
+
+; ####################
+; ####################
+; ###              ###
+; ###  RAM layout  ###
+; ###              ###
+; ####################
+; ####################
+
+
+
+
+; ########################
+; ########################
+; ###                  ###
+; ###  Initialization  ###
+; ###                  ###
+; ########################
+; ########################
+
+	.org	$F000,$EA	; $EA is NOP
+	.byte	"https://github.com/jbqueru/djaybee40",0
+Init:
+; Set up CPU
+	CLD
+	LDX	#$FF
+	TXS
+
+; Wait a bit, so things can stabilize
+	LDA	#0
+	TAX
+	TAY
+Wait:	INY
+	BNE	Wait
+        INX
+        BNE	Wait
+
+; Clear zero-page (TIA + RAM)
+	TAX
+Clear:	STA	0,X
+	INX
+	BNE	Clear
+
+Loop:
+; Overscan
+; First line of overscan: turn display off
+
+; -------------------------------
+; Start overscan line 1		;
+	LDA	#2		;
+	STA	_TIA_VBLANK	;
+	STA	_TIA_WSYNC	;
+; End overscan line 1		;
+; -------------------------------
+
+; Then 29 lines of overscan without anything in them
+; -------------------------------
+; Start overscan line 2		;
+	.repeat 29		;
+	STA	_TIA_WSYNC	; overscan line 2-30
+	.repend			;
+; End overscan line 30		;
+; -------------------------------
+
+; Vsync
+; -------------------------------
+; Start vsync line 1		;
+; First line of Vsync: turn sync on
+	STA	_TIA_WSYNC	; vsync line 1
+	LDA	#2		;
+	STA	_TIA_VSYNC	;
+; End vsync line 1		;
+; -------------------------------
+
+; Then 2 lines of vsync without anything in them
+; -------------------------------
+; Start vsync line 2		;
+	.repeat 2		;
+	STA	_TIA_WSYNC	; vsync line 2-3
+	.repend			;
+; End vsync line 3		;
+; -------------------------------
+
+; Vblank
+; -------------------------------
+; Start vblank line 1		;
+; First line of Vblank: turn sync off
+	LDA	#0		;
+	STA	_TIA_VSYNC	;
+	STA	_TIA_WSYNC	; vblank line 1
+; End vblank line 1		;
+; -------------------------------
+
+; -------------------------------
+; Start vblank line 2		;
+; Then 36 lines of vblank without anything in them
+	.repeat 36		;
+	STA	_TIA_WSYNC	; vblank line 2-37
+	.repend			;
+; End vblank line 37		;
+; -------------------------------
+
+; -------------------------------
+; Start active line 1		;
+	LDA	#0		;
+	STA	_TIA_VBLANK	;
+	LDY	#192		;
+Lines:				;
+	STA	_TIA_WSYNC	; line 01-192
+	DEY			;
+        BNE	Lines		;
+; End active line 192		;
+; -------------------------------
+
+	JMP	Loop
+
+; Reset / Start vectors
+	.org	$FFFC
+	.word	Init
+	.word	Init
+
+; 345678901234567890123456789012345678901234567890123456789012345678901234567890

@@ -14,7 +14,7 @@ celebreate.
 
 Back in 1984, I was 10 years old, living in France.
 My family was not into computers, the closest we had was a
-[Philips Videopac ((a.k.a. Magnavox
+[Philips Videopac (a.k.a. Magnavox
 Odyssey<sup>2</sup>)](https://en.wikipedia.org/wiki/Magnavox_Odyssey_2)
 in the early 80s; we did have the Computer Intro / Computer Programmer
 cartridge, and I remember typing some of the listings from the manual, 

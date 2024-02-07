@@ -191,3 +191,18 @@ with that machine and its rushed hardware.
 In another direction, I can look in the direction of fantasy
 consoles (PICO-8, TIC-80) or block-based programming (Scratch)
 or even somewhere at the intersection (MakeCode).
+
+## The features
+
+Very quickly, a difficulty becomes scrolling: not all machines
+support fine-grained hardware scrolling. The Atari ST can
+do 8-line vertical (the STe can do better than that), the CPC
+can do 8-line vertical and 8-pixel horizontal (in mode 1). If
+I go toward anything based on 9918A, there's no hardware
+scrolling, and tiles must be 8-pixel aligned. 7800 has a bias 
+toward anything organized in slices of 8 or 16 lines, 2600
+has a very low-resolution background, and the bit organization
+makes it unfriendly toward horizontal scrolling.
+
+This all suggests vertical scrolling as a first exploration,
+especially in slices of 8 pixels.

@@ -205,6 +205,9 @@ Clear:	STA	0,X
 	INX
 	BNE	Clear
 
+	LDA	#_TIA_CO_TURQ | _TIA_LU_MAX
+	STA	_TIA_COLUPF
+
 Loop:
 ; Overscan
 ; First line of overscan: turn display off
@@ -270,6 +273,7 @@ Loop:
 	STA	_TIA_VBLANK	;
 	LDY	#192		;
 Lines:				;
+	STY	_TIA_PF1	;
 	STA	_TIA_WSYNC	; line 01-192
 	DEY			;
         BNE	Lines		;

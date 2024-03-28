@@ -1,0 +1,54 @@
+; Copyright 2024 Jean-Baptiste M. "JBQ" "Djaybee" Queru
+;
+; This program is free software: you can redistribute it and/or modify
+; it under the terms of the GNU Affero General Public License as
+; published by the Free Software Foundation, either version 3 of the
+; License, or (at your option) any later version.
+;
+; As an added restriction, if you make the program available for
+; third parties to use on hardware you own, such as public gaming
+; cabinets (whether or not in a gaming arcade, whether or not
+; coin-operated or otherwise for a fee,) the conditions of
+; section 13 will apply even if no network is involved.
+;
+; This program is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+; GNU Affero General Public License for more details.
+;
+; You should have received a copy of the GNU Affero General Public License
+; along with this program. If not, see <https://www.gnu.org/licenses/>.
+;
+; SPDX-License-Identifier: AGPL-3.0-or-later
+
+; Coding style:
+;	- ASCII
+;	- hard tabs, 8 characters wide, except in ASCII art
+;	- 120 columns overall
+;	- Standalone block comments in the first 80 columns
+;	- Code-related block comments allowed in the last 80 columns
+;	- Global symbols for code are CamelCase
+;	- Local symbols for code are lowerCamelCase
+;	- Symbols for variables are snake_case
+;	- Symbols for hardware registers are ALL_CAPS
+;	- Related symbols start with the same prefix (so they sort together)
+;	- Include but comment out instructions that help readability but
+;		don't do anything (e.g. redundant CLC when the carry is
+;		guaranteed already to be clear). The comment symbol should be
+;		where the instruction would be, i.e. not on the first column.
+;		There should be an explanation in a comment.
+;	- Note: rulers at 40, 80 and 120 columns help source width
+
+
+	.org	$4000
+
+	DI
+
+	LD	B,$7F
+
+	LD	DE,$104A
+	OUT	(C),D
+	OUT	(C),E
+
+Loop:
+	JMP	Loop

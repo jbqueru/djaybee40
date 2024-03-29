@@ -42,13 +42,106 @@
 
 	.org	$4000
 
+; *** First, disable interrupts, so that the firmware is out of the way ***
 	DI
 
-	LD	B,$7F
+; *** Disable ROMs, switch to mode 1 ***
+	LD	BC,$7F00 + 10001101b
+	OUT	(C),C
 
-	LD	DE,$104A
+; *** Disable 6128 extended RAM ***
+	LD	C,11000000b
+	OUT	(C),C
+
+; *** Black palette ***
+	LD	DE,(00000000b << 8) + 01000000b + $14
 	OUT	(C),D
 	OUT	(C),E
+	INC	D
+	OUT	(C),D
+	OUT	(C),E
+	INC	D
+	OUT	(C),D
+	OUT	(C),E
+	INC	D
+	OUT	(C),D
+	OUT	(C),E
+	LD	D,00010000b
+	OUT	(C),D
+	OUT	(C),E
+
+; *** Program CRTC 384 x 160 (cinemascope) ***
+	LD	BC,($BC << 8) + 0
+	OUT	(C),C
+	LD	BC,($BD << 8) + 63
+	OUT	(C),C
+	LD	BC,($BC << 8) + 1
+	OUT	(C),C
+	LD	BC,($BD << 8) + 48
+	OUT	(C),C
+	LD	BC,($BC << 8) + 2
+	OUT	(C),C
+	LD	BC,($BD << 8) + 50
+	OUT	(C),C
+	LD	BC,($BC << 8) + 3
+	OUT	(C),C
+	LD	BC,($BD << 8) + $8E
+	OUT	(C),C
+	LD	BC,($BC << 8) + 4
+	OUT	(C),C
+	LD	BC,($BD << 8) + 38
+	OUT	(C),C
+	LD	BC,($BC << 8) + 5
+	OUT	(C),C
+	LD	BC,($BD << 8) + 0
+	OUT	(C),C
+	LD	BC,($BC << 8) + 6
+	OUT	(C),C
+	LD	BC,($BD << 8) + 20
+	OUT	(C),C
+	LD	BC,($BC << 8) + 7
+	OUT	(C),C
+	LD	BC,($BD << 8) + 28
+	OUT	(C),C
+	LD	BC,($BC << 8) + 8
+	OUT	(C),C
+	LD	BC,($BD << 8) + 00b
+	OUT	(C),C
+	LD	BC,($BC << 8) + 9
+	OUT	(C),C
+	LD	BC,($BD << 8) + 7
+	OUT	(C),C
+	LD	BC,($BC << 8) + 12
+	OUT	(C),C
+	LD	BC,($BD << 8) + $30
+	OUT	(C),C
+	LD	BC,($BC << 8) + 13
+	OUT	(C),C
+	LD	BC,($BD << 8) + $00
+	OUT	(C),C
+
+
+; *** Set 8255 to default mode (register A as write) ***
+	LD	BC,($F7 << 8) + 10000010b
+
+; *** Basic AY-3-8912 setup - mixer off ***
+	LD	BC,($F4 << 8) + 7
+	OUT	(C),C
+	LD	BC,$F6C0
+	OUT	(C),C
+	LD	BC,$F600
+	OUT	(C),C
+	LD	BC,($F4 << 8) + 0
+	OUT	(C),C
+	LD	BC,$F680
+	OUT	(C),C
+	LD	BC,$F600
+	OUT	(C),C
+
+; *** Turn floppy motors off ***
+	LD	BC,$FA7E
+	XOR	A
+	OUT	(C),A
 
 Loop:
 	JMP	Loop

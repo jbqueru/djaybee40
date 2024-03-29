@@ -143,5 +143,37 @@
 	XOR	A
 	OUT	(C),A
 
+; *** Set our own interrupt routine, enable interrupts ***
+	LD	A,$C3		; C3 = unconditional jump
+	LD	($38),A
+	LD	HL,Interrupt
+	LD	($39),HL
+
+	IM	1
+	EI
+
 Loop:
+WaitVBL:
+	LD	B,$F5
+	IN	A,(C)
+	AND	000000001b
+	JR	Z,WaitVBL
+
+	HALT
+	HALT
+	HALT
+
+	LD	BC,$7F00
+	OUT	(C),C
+
+	LD	A,E
+	AND	$1F
+	OR	01000000b
+	OUT	(C),A
+	INC	E
+
 	JMP	Loop
+
+Interrupt:
+	EI
+	RET

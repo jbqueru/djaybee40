@@ -28,7 +28,6 @@
 ;	- Standalone block comments in the first 80 columns
 ;	- Code-related block comments allowed in the last 80 columns
 ;	- Global symbols for code are CamelCase
-;	- Local symbols for code are lowerCamelCase
 ;	- Symbols for variables are snake_case
 ;	- Symbols for hardware registers are ALL_CAPS
 ;	- Related symbols start with the same prefix (so they sort together)

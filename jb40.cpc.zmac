@@ -153,15 +153,15 @@
 	EI
 
 Loop:
+; *** Wait for VSYNC to turn on ***
 WaitVBL:
 	LD	B,$F5
 	IN	A,(C)
 	AND	000000001b
 	JR	Z,WaitVBL
 
-	HALT
-	HALT
-	HALT
+	HALT			; line 2
+	HALT			; line 54
 
 	LD	BC,$7F10
 	OUT	(C),C
@@ -180,4 +180,12 @@ Work:	DJNZ	Work
 
 Interrupt:
 	EI
+	PUSH	BC
+	LD	BC,$7F10
+	OUT	(C),C
+	LD	C,$48
+	OUT	(C),C
+	LD	C,$4F
+	OUT	(C),C
+	POP	BC
 	RET

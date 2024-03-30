@@ -160,21 +160,12 @@ WaitVBL:
 	AND	000000001b
 	JR	Z,WaitVBL
 
-	HALT			; line 2
-	HALT			; line 54
+; *** Skip over where the VSYNC + 2 interrupt may or may not be ***
+	LD	B,32
+SkipInt:
+	DJNZ	SkipInt
 
-	LD	BC,$7F10
-	OUT	(C),C
-
-	LD	A,E
-	AND	$1F
-	OR	01000000b
-	OUT	(C),A
-	INC	E
-
-; *** Add 16 lines worth of fake work, enough for VSYNC to turn off ***
-	LD	B,0
-Work:	DJNZ	Work
+	HALT	; Line 54
 
 	JMP	Loop
 

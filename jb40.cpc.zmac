@@ -77,7 +77,7 @@
 	OUT	(C),C
 	LD	BC,($BC << 8) + 1
 	OUT	(C),C
-	LD	BC,($BD << 8) + 48
+	LD	BC,($BD << 8) + 2
 	OUT	(C),C
 	LD	BC,($BC << 8) + 2
 	OUT	(C),C
@@ -163,7 +163,7 @@ WaitVBL:
 	HALT
 	HALT
 
-	LD	BC,$7F00
+	LD	BC,$7F10
 	OUT	(C),C
 
 	LD	A,E
@@ -171,6 +171,10 @@ WaitVBL:
 	OR	01000000b
 	OUT	(C),A
 	INC	E
+
+; *** Add 16 lines worth of fake work, enough for VSYNC to turn off ***
+	LD	B,0
+Work:	DJNZ	Work
 
 	JMP	Loop
 

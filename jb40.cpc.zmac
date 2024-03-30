@@ -144,10 +144,13 @@
 	OUT	(C),A
 
 ; *** Set our own interrupt routine, enable interrupts ***
-	LD	A,$C3		; C3 = unconditional jump
-	LD	($38),A
-	LD	HL,Interrupt
-	LD	($39),HL
+;	LD	A,$C3		; C3 = unconditional jump
+;	LD	($38),A
+;	LD	HL,Interrupt
+;	LD	($39),HL
+
+	LD	HL,$C9FB	; FB = EI, C9 = RET, little-endian
+	LD	($38),HL
 
 	IM	1
 	EI

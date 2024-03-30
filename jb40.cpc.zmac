@@ -203,7 +203,6 @@ Wait4:
 
 
 Interrupt:
-	EI
 	PUSH	BC
 	LD	BC,$7F10
 	OUT	(C),C
@@ -214,4 +213,5 @@ ILoop:	DJNZ	ILoop
 	LD	BC,$7F4F
 	OUT	(C),C
 	POP	BC
+	EI
 	RET

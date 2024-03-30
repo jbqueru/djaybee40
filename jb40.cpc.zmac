@@ -76,11 +76,11 @@
 	OUT	(C),C
 	LD	BC,($BC << 8) + 1
 	OUT	(C),C
-	LD	BC,($BD << 8) + 44	; should be 48
+	LD	BC,($BD << 8) + 44	; should be 48 for full screen size
 	OUT	(C),C
 	LD	BC,($BC << 8) + 2
 	OUT	(C),C
-	LD	BC,($BD << 8) + 48	; should be 50
+	LD	BC,($BD << 8) + 48	; should be 50 for full screen size
 	OUT	(C),C
 	LD	BC,($BC << 8) + 3
 	OUT	(C),C

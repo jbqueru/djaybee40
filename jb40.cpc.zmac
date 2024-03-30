@@ -77,11 +77,11 @@
 	OUT	(C),C
 	LD	BC,($BC << 8) + 1
 	OUT	(C),C
-	LD	BC,($BD << 8) + 2
+	LD	BC,($BD << 8) + 44	; should be 48
 	OUT	(C),C
 	LD	BC,($BC << 8) + 2
 	OUT	(C),C
-	LD	BC,($BD << 8) + 50
+	LD	BC,($BD << 8) + 48	; should be 50
 	OUT	(C),C
 	LD	BC,($BC << 8) + 3
 	OUT	(C),C
@@ -144,13 +144,13 @@
 	OUT	(C),A
 
 ; *** Set our own interrupt routine, enable interrupts ***
-;	LD	A,$C3		; C3 = unconditional jump
-;	LD	($38),A
-;	LD	HL,Interrupt
-;	LD	($39),HL
+	LD	A,$C3		; C3 = unconditional jump
+	LD	($38),A
+	LD	HL,Interrupt
+	LD	($39),HL
 
 	LD	HL,$C9FB	; FB = EI, C9 = RET, little-endian
-	LD	($38),HL
+;	LD	($38),HL
 
 	IM	1
 	EI
@@ -163,46 +163,171 @@ WaitVBL:
 	AND	000000001b
 	JR	Z,WaitVBL
 
-; *** Skip over where the VSYNC + 2 interrupt may or may not be ***
-	LD	B,32
-SkipInt1:
-	DJNZ	SkipInt1
+	DI
+	LD	E,35
+XLp1:
+	LD	B,16
+Xlp2:
+	DJNZ	Xlp2
+	DEC	E
+	JR	NZ,Xlp1
+	EI
+	NOP
+	HALT	; 88
 
-; *** Wait until interrupt 2 on line 54 ***
-	HALT	; Line 55 because the interrupt takes a whole line ***
+	LD	BC,$7F10
+	OUT	(C),C
+	LD	C,$4B
+	OUT	(C),C
 
 	DI
+	LD	E,137
+XLp3:
 
-; *** Wait approximately 16 lines (4 times the value in E) ***
-	LD	E,4
-Wait4x:
-	LD	B,64
-Wait4:
-	DJNZ	Wait4
-	DEC	E
-	JR	NZ,Wait4x
+	LD	B,14	; 2
+Xlp4:
+	DJNZ	Xlp4	; 13*4+3
+	NOP		; 1
+	NOP		; 1
+	NOP		; 1
+	DEC	E	; 1
+	JR	NZ,Xlp3 ; 3
 
 ; *** Poke MREM bit 4 ***
 	LD	BC,$7F00 + 10011101b
 	OUT	(C),C
 
+	LD	E,25
+XLp5:
+
+	LD	B,14	; 2
+Xlp6:
+	DJNZ	Xlp6	; 13*4+3
+	NOP		; 1
+	NOP		; 1
+	NOP		; 1
+	DEC	E	; 1
+	JR	NZ,Xlp5 ; 3
+
+	LD	BC,$7F10
+	OUT	(C),C
+	LD	C,$44
+	OUT	(C),C
+
 	EI
+	NOP
+
+
 
 	JMP	Loop
 
 
-; In VSync lines
+; Regular interrupts
 ;	0 start vsync
 ;	2 interrupt 1
 ;	8 start top border (R3H)
 ;	54 interrupt 2
-;	88 start display ((R4+1-R7)*8)
+;	88 start display ( (R4+1-R7)*8 )
 ;	106 interrupt 3
 ;	158 interrupt 4
 ;	210 interrupt 5
-;	248 start bottom border ((R4+1-R7+R6)*8)
+;	248 start bottom border ( (R4+1-R7+R6)*8 )
 ;	262 interrupt 6
-;	312=0 ((R4+1)*8)
+;	312=0 start vsync ( (R4+1)*8 )
+
+; Interrupt shift 1
+;	0 start vsync
+;	2 interrupt request 1
+;	8 start top border (R3H)
+;	~44 (35-53) interrupt acknowledge 1
+;	86 interrupt 2
+;	88 start display ( (R4+1-R7)*8 )
+;	138 interrupt request 3
+;	190 interrupt request 4
+;	242 interrupt request 5
+;	248 start bottom border ( (R4+1-R7+R6)*8 )
+;	249 interrupt acknowledge 3-5
+;	294 interrupt 6
+;	312=0 start vsync ( (R4+1)*8 )
+;	2 vsync interrupt request suppressed, counter == 20
+
+; Interrupt shift 2
+;	0 start vsync
+;	2 interrupt request 1
+;	8 start top border (R3H)
+;	~44 (35-53) interrupt acknowledge 1
+;	86 interrupt 2
+;	88 start display ( (R4+1-R7)*8 )
+;	138 interrupt request 3
+;	190 interrupt request 4
+;	242 interrupt request 5
+;	248 start bottom border ( (R4+1-R7+R6)*8 )
+;	~284 (275-293) interrupt acknowledge 3-5, counter -= 32
+;	312=0 start vsync
+;	2 interrupt line 2 allowed, counter == 40
+
+; MRER reset
+;	0 start vsync
+;	2 interrupt request 1
+;	8 start top border (R3H)
+;	~44 (35-53) interrupt acknowledge 1
+;	86 interrupt 2
+;	88 start display ( (R4+1-R7)*8 )
+;	138 interrupt request 3
+;	190 interrupt request 4
+;	224 MRER bit 4, reset counter
+;	248 start bottom border ( (R4+1-R7+R6)*8 )
+;	249 interrupt acknowledge 3-4
+;	276 interrupt 5
+;	312=0 start vsync
+;	2 interrupt line 2 allowed, counter == 38
+
+; MRER reset + clear request
+;	0 start vsync
+;	2 interrupt request 1
+;	8 start top border (R3H)
+;	~44 (35-53) interrupt acknowledge 1
+;	86 interrupt 2
+;	88 start display ( (R4+1-R7)*8 )
+;	138 interrupt request 3
+;	190 interrupt request 4
+;	224 MRER bit 4, reset counter, clear request
+;	248 start bottom border ( (R4+1-R7+R6)*8 )
+;	276 interrupt 5
+;	312=0 start vsync
+;	2 interrupt line 2 allowed, counter == 38
+
+; MRER clear bit 5
+;	0 start vsync
+;	2 interrupt request 1
+;	8 start top border (R3H)
+;	~44 (35-53) interrupt acknowledge 1
+;	86 interrupt 2
+;	88 start display ( (R4+1-R7)*8 )
+;	138 interrupt request 3
+;	190 interrupt request 4
+;	224 MRER bit 4, counter -= 32
+;	248 start bottom border ( (R4+1-R7+R6)*8 )
+;	249 interrupt acknowledge 3-4
+;	274 interrupt 5
+;	312=0 start vsync
+;	2 interrupt line 2 allowed, counter == 40
+
+; MRER clear bit 5 + clear request
+;	0 start vsync
+;	2 interrupt request 1
+;	8 start top border (R3H)
+;	~44 (35-53) interrupt acknowledge 1
+;	86 interrupt 2
+;	88 start display ( (R4+1-R7)*8 )
+;	138 interrupt request 3
+;	190 interrupt request 4
+;	224 MRER bit 4, counter -= 32, clear request
+;	248 start bottom border ( (R4+1-R7+R6)*8 )
+;	274 interrupt 5
+;	312=0 start vsync
+;	2 interrupt line 2 allowed, counter == 40
+
 
 
 Interrupt:
@@ -212,7 +337,8 @@ Interrupt:
 	LD	C,$48
 	OUT	(C),C
 	LD	B,14
-ILoop:	DJNZ	ILoop
+ILoop:
+	DJNZ	ILoop
 	LD	BC,$7F4F
 	OUT	(C),C
 	POP	BC

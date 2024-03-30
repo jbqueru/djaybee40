@@ -155,31 +155,63 @@
 	EI
 
 Loop:
-; *** Wait for VSYNC to turn on ***
+; *** Wait for the VSYNC bit to be asserted ***
 WaitVBL:
 	LD	B,$F5
 	IN	A,(C)
-	AND	000000001b
-	JR	Z,WaitVBL
+	RRCA
+	JR	NC,WaitVBL
 
+; *** Shift interrupts ***
 	DI
-	LD	E,35
-XLp1:
-	LD	B,16
+
+; Wait between 35 and 53 lines, and enable interrupts
+	LD	B,224		; 35 lines is 2240 NOPs
+				; run a 10-NOP loop 224 times
 Xlp2:
-	DJNZ	Xlp2
-	DEC	E
-	JR	NZ,Xlp1
-	EI
-	NOP
-	HALT	; 88
+	ADD	HL,HL		; 3
+	ADD	HL,HL		; 3
+	DJNZ	Xlp2		; 4
 
-	LD	BC,$7F10
-	OUT	(C),C
-	LD	C,$4B
-	OUT	(C),C
+	EI
+	NOP			; Delay to avoid EI/HALT pair
+
+; -------------------------------
+; Start line 86 (Border 78)	;
+;				;
+; Sync up with the display and will remain in sync all the way
+				;
+	HALT			; +19/19 (HSync + request + EI/RET)
+				;
+	LD	B,11		; +2/21
+L86Wait:			;
+	DJNZ	L86Wait		;	10*4+3=43
+				; +43/64 loop
+				;
+; End line 86 (Border 78)	;
+; -------------------------------
+
+; -------------------------------
+; Start line 87 (Border 79)	;
+				;
+	LD	B,13		; +2/2
+L87Wait:			;
+	DJNZ	L87Wait		;	12*4+3=51
+				; +51/53 loop
+	INC	BC		; +2/55 filler
+				;
+	LD	BC,$7F10	; +3/58
+	OUT	(C),C		; +4/62
+	LD	C,$4B		; +2/64
+				;
+; End line 87 (Border 79)	;
+; -------------------------------
+
+	OUT	(C),C		; +4
 
 	DI
+
+
 	LD	E,137
 XLp3:
 
@@ -210,7 +242,7 @@ Xlp6:
 
 	LD	BC,$7F10
 	OUT	(C),C
-	LD	C,$44
+	LD	C,$5D
 	OUT	(C),C
 
 	EI

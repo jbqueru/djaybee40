@@ -162,10 +162,28 @@ WaitVBL:
 
 ; *** Skip over where the VSYNC + 2 interrupt may or may not be ***
 	LD	B,32
-SkipInt:
-	DJNZ	SkipInt
+SkipInt1:
+	DJNZ	SkipInt1
 
-	HALT	; Line 54
+; *** Wait until interrupt 2 on line 54 ***
+	HALT	; Line 55 because the interrupt takes a whole line ***
+
+	DI
+
+; *** Wait approximately 16 lines (4 times the value in E) ***
+	LD	E,4
+Wait4x:
+	LD	B,64
+Wait4:
+	DJNZ	Wait4
+	DEC	E
+	JR	NZ,Wait4x
+
+; *** Poke MREM bit 4 ***
+	LD	BC,$7F00 + 10011101b
+	OUT	(C),C
+
+	EI
 
 	JMP	Loop
 

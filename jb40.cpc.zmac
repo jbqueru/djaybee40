@@ -178,6 +178,21 @@ Work:	DJNZ	Work
 
 	JMP	Loop
 
+
+; In VSync lines
+;	0 start vsync
+;	2 interrupt 1
+;	8 start top border (R3H)
+;	54 interrupt 2
+;	88 start display ((R4+1-R7)*8)
+;	106 interrupt 3
+;	158 interrupt 4
+;	210 interrupt 5
+;	248 start bottom border ((R4+1-R7+R6)*8
+;	262 interrupt 6
+;	312=0 ((R4+1)*8)
+
+
 Interrupt:
 	EI
 	PUSH	BC

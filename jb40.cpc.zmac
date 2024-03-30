@@ -200,7 +200,9 @@ Interrupt:
 	OUT	(C),C
 	LD	C,$48
 	OUT	(C),C
-	LD	C,$4F
+	LD	B,14
+ILoop:	DJNZ	ILoop
+	LD	BC,$7F4F
 	OUT	(C),C
 	POP	BC
 	RET

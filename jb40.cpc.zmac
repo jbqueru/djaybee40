@@ -84,7 +84,7 @@
 	OUT	(C),C
 	LD	BC,($BC << 8) + 3
 	OUT	(C),C
-	LD	BC,($BD << 8) + $8E
+	LD	BC,($BD << 8) + $8C
 	OUT	(C),C
 	LD	BC,($BC << 8) + 4
 	OUT	(C),C
@@ -181,12 +181,13 @@ Skip35:
 ;				;
 ; Sync up with the display and will remain in sync all the way
 				;
-	HALT			; +19/19 (HSync + request + EI/RET)
+	HALT			; +17/17 (HSync + request + EI/RET)
 				;
-	LD	B,11		; +2/21
+	LD	B,11		; +2/19
 L86Wait:			;
 	DJNZ	L86Wait		;	10*4+3=43
-				; +43/64 loop
+				; +43/62 loop
+	INC	BC		; +2/64
 				;
 ; End line 86 (Border 78)	;
 ; -------------------------------

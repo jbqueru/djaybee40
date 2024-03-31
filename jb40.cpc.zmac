@@ -44,6 +44,9 @@
 ; *** First, disable interrupts, so that the firmware is out of the way ***
 	DI
 
+; *** Get stack set up in lower 48kB ***
+	LD	SP,$C000
+
 ; *** Disable ROMs, switch to mode 1 ***
 	LD	BC,$7F00 + 10001101b
 	OUT	(C),C

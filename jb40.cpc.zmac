@@ -38,9 +38,64 @@
 ;		There should be an explanation in a comment.
 ;	- Note: rulers at 40, 80 and 120 columns help source width
 
+; #############################################################################
+; #############################################################################
+; #############################################################################
+; ########                                                             ########
+; ########                                                             ########
+; ########                        DJAYBEE AT 40                        ########
+; ########                                                             ########
+; ########          CELEBRATING 40 YEARS OF CODING EXPERIENCE          ########
+; ########                                                             ########
+; ########             A DEMO FOR AMSTRAD CPC 464 TO 6128              ########
+; ########                                                             ########
+; ########                                                             ########
+; #############################################################################
+; #############################################################################
+; #############################################################################
 
+; At the technical level, the following high-level points are noteworthy:
+;
+; The display is based around 51x20 CRTC cells, i.e. 408*160, which almost
+; fills the horizontal overscan, chosen because it fits in 16kB of framebuffer
+; and approximately matches the aspect ration of widescreen movies.
+;
+; It uses hardware scrolling, with page-flipping between pages that are off
+; by half a cell.
+;
+; It races the beam during the active display, changing one of the colors so
+; that sprites can each use a different color, giving the illusion of more
+; than 4 simultaneous colors.
+;
+; It interferes with interrupt timing so that it only needs to race the beam
+; during the active part or the display.
+
+	.z80
 	.org	$4000
 
+; #############################################################################
+; #############################################################################
+; ###                                                                       ###
+; ###                                                                       ###
+; ###                       CPC Hardware Definitions                        ###
+; ###                                                                       ###
+; ###                                                                       ###
+; #############################################################################
+; #############################################################################
+
+; TODO!!!
+
+; #############################################################################
+; #############################################################################
+; ###                                                                       ###
+; ###                                                                       ###
+; ###                        Hardware Initialization                        ###
+; ###                                                                       ###
+; ###                                                                       ###
+; #############################################################################
+; #############################################################################
+
+Init:
 ; *** First, disable interrupts, so that the firmware is out of the way ***
 	DI
 
@@ -145,6 +200,20 @@
 	XOR	A
 	OUT	(C),A
 
+; TODO: move code to execution location.
+
+; #############################################################################
+; #############################################################################
+; ###                                                                       ###
+; ###                                                                       ###
+; ###                        Software Initialization                        ###
+; ###                                                                       ###
+; ###                                                                       ###
+; #############################################################################
+; #############################################################################
+
+; TODO: clear all RAM.
+
 ; *** Set our own interrupt routine ***
 ;	LD	A,$C3		; C3 = unconditional jump
 ;	LD	($38),A
@@ -177,6 +246,17 @@ ClearFBLoop:
 
 ; *** All done, enable interrupts ***
 	EI
+
+; #############################################################################
+; #############################################################################
+; ###                                                                       ###
+; ###                                                                       ###
+; ###                               Main Loop                               ###
+; ###                                                                       ###
+; ###                                                                       ###
+; #############################################################################
+; #############################################################################
+
 
 Loop:
 ; *** Wait for the VSYNC bit to be asserted ***

@@ -189,6 +189,24 @@ WaitVBL:
 ; *** Shift interrupts ***
 	DI
 
+	LD	HL,(0)
+	INC	HL
+	LD	A,00000011b
+	AND	H
+	OR	00110000b
+	LD	H,A
+	LD	(0),HL
+
+	LD	BC,($BC << 8) + 12
+	OUT	(C),C
+	INC	B
+	OUT	(C),H
+	LD	BC,($BC << 8) + 13
+	OUT	(C),C
+	INC	B
+	OUT	(C),L
+
+
 ; Wait between 35 and 53 lines, and enable interrupts
 	LD	B,224		; 35 lines is 2240 NOPs
 				; run a 10-NOP loop 224 times

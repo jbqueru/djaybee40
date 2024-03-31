@@ -145,7 +145,7 @@
 	XOR	A
 	OUT	(C),A
 
-; *** Set our own interrupt routine, enable interrupts ***
+; *** Set our own interrupt routine ***
 ;	LD	A,$C3		; C3 = unconditional jump
 ;	LD	($38),A
 ;	LD	HL,Interrupt
@@ -155,6 +155,27 @@
 	LD	($38),HL
 
 	IM	1
+
+; *** Clear framebuffer ***
+	LD	HL,$C000
+	LD	A,L
+ClearFBLoop:
+	LD	(HL),A
+	INC	HL
+	CMP	H
+	JR	NZ, ClearFBLoop
+
+; *** Set up proper palette ***
+	LD	BC,$7F01
+	OUT	(C),C
+	LD	C,$40
+	OUT	(C),C
+	LD	C,$02
+	OUT	(C),C
+	LD	C,$4B
+	OUT	(C),C
+
+; *** All done, enable interrupts ***
 	EI
 
 Loop:

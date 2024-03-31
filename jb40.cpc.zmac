@@ -168,10 +168,10 @@ WaitVBL:
 ; Wait between 35 and 53 lines, and enable interrupts
 	LD	B,224		; 35 lines is 2240 NOPs
 				; run a 10-NOP loop 224 times
-Xlp2:
+Skip35:
 	ADD	HL,HL		; 3
 	ADD	HL,HL		; 3
-	DJNZ	Xlp2		; 4
+	DJNZ	Skip35		; 4
 
 	EI
 	NOP			; Delay to avoid EI/HALT pair

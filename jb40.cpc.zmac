@@ -69,6 +69,183 @@
 ;
 ; It interferes with interrupt timing so that it only needs to race the beam
 ; during the active part or the display.
+;
+;	More specifically, the default interrupt timing looks like this, with
+;	an interrupt request every 52 lines starting 2 lines after Vsync:
+;		Line 002 Interrupt
+;		Line 054 Interrupt
+;		Line 106 Interrupt
+;		Line 158 Interrupt
+;		Line 210 Interrupt
+;		Line 262 Interrupt
+;
+;	With the CRTC timings overlaid on top, here's the timing:
+;		Line 000 Vsync start
+;		Line 002 Interrupt
+;		Line 054 Interrupt
+;		Line 088 Display start
+;		Line 106 Interrupt
+;		Line 158 Interrupt
+;		Line 210 Interrupt
+;		Line 248 Bottom Border start
+;		Line 262 Interrupt
+;
+;	But that doesn't work well to synchronize with the top of the display:
+;	Synchronizing at line 54 requires another 34 lines of perfect sync
+;	Before reaching the active display.
+;
+;	Now, the CPC tries to avoid scheduling interrupts too close to one
+;	another. If an interrupt gets acknowledged less than 20 lines from
+;	the next one (typically because interrupts would be disabled for a
+;	long time to allow for some interrupt-free processing), the next one
+;	is delayed by 32 lines to give things time to get processed.
+;
+;	We can abuse that to get the interrupts where we want them: by forcing
+;	the first interrupt of the frame to get acknowledged late enough, the
+;	subsequent ones get delayed by 32 lines. In other words, if we disable
+;	interrupts immediately after Vsync (which we can poll) and keep them
+;	disabled for 35 to 53 lines (enough to be more than 32 lines late,
+;	but not so much to merge with the next interrupt), the interrupt that's
+;	normally scheduled on line 54 will shift to line 86, which is just
+;	about perfect for a display that starts on line 88, and the timing
+;	now looks like this:
+;
+;	With the CRTC timings overlaid on top, here's the timing:
+;		Line 000 Vsync start
+;		Line 002 Interrupt request
+;		Line 35-53 (typically 44) Interrupt acknowledge
+;		Line 086 Interrupt
+;		Line 088 Display start
+;		Line 138 Interrupt
+;		Line 190 Interrupt
+;		Line 242 Interrupt
+;		Line 248 Bottom Border start
+;		Line 294 Interrupt
+;
+;	That looks promising, but it doesn't actually work: because the CPC
+;	tries to keep interrupts synchronized with the frame, it re-syncs
+;	them at Vsync, and it has a different mechanism there to keep
+;	interrupts far enough apart: if the previous interrupt was less than
+;	32 lines away, it skips the first interrupt of the frame entirely,
+;	and goes back to the regular schedule after that. Our actually timing
+;	would look like this:
+;		Line 000 Vsync start
+;		Line 002 Interrupt request
+;		Line 35-53 (typically 44) interrupt acknowledge
+;		Line 086 Interrupt
+;		Line 088 Display start
+;		Line 138 Interrupt
+;		Line 190 Interrupt
+;		Line 242 Interrupt
+;		Line 248 Bottom Border start
+;		Line 294 Interrupt
+;		Line 000 Vsync start
+;		Line 054 Interrupt
+;		Line 088 Display start
+;		Line 106 Interrupt
+;		Line 158 Interrupt
+;		Line 210 Interrupt
+;		Line 248 Bottom Border start
+;		Line 262 Interrupt
+;
+;	Notice that the second frame has no interrupt at line 2. No interrupt
+;	request, no way to delay the interrupt acknowledge, no way to cause
+;	the next interrupt to get delayed.
+;
+;	To compensate for that, we need to introduce some other delay in the
+;	interrupt timing: if we add another 32 lines somewhere, the last
+;	interrupt of the frame will be on line 274 (210 delayed twice), and
+;	Vsync will happen more than 32 lines later, going back to the previous
+;	sequence.
+;
+;	It's possible to use the exact same trick a second time, and there
+;	are two possible options for this:
+;		Line 000 Vsync start
+;		Line 002 Interrupt request
+;		Line 35-53 (typically 44) Interrupt acknowledge
+;		Line 086 Interrupt
+;		Line 088 Display start
+;		Line 138 Interrupt request
+;		Line 171-189 (typically 180) Interrupt acknowledge
+;		Line 222 Interrupt
+;		Line 248 Bottom Border start
+;		Line 274 Interrupt
+;
+;	We need to keep running synchronized code for a little while, 92 lines
+;	during the display, but for the current use case this isn't an issue
+;	since we're running synchronized code anyway. The issue is that we
+;	need to handle an interrupt in the middle of the frame, and that eats
+;	probably at least 10 us (EI, 5 to trigger the mode 1 interrupt,
+;	4 for a minimal RET). 10 us is a whole lot to sacrifice.
+;
+;	That can be avoided by doing the delay on a later interrupt:
+;		Line 000 Vsync start
+;		Line 002 Interrupt request
+;		Line 35-53 (typically 44) Interrupt acknowledge
+;		Line 086 Interrupt
+;		Line 088 Display start
+;		Line 138 Interrupt request
+;		Line 190 Interrupt request
+;		Line 242 Interrupt request
+;		Line 248 Bottom Border start
+;		Line 275-293 Interrupt acknowledge
+;
+;	That's somewhat pointless: the whole point of shifting interrupts
+;	in the first place was to save us 32 lines of perfect-sync code, but
+;	that option replaces that with a minimum of 35+27 lines of mostly-sync
+;	code, which has a good chance of being just about as constraining.
+;
+;	However, hidden in the Gate Array's Mode and Rom Enable Register (MRER)
+;	lives an extra bit, bit 4, for which documentation is somewhat sparse
+;	and unclear. Writing to MRER with that bit set to 1 either clears the
+;	top bit or all bits of the interrupt counter, and might also clear any
+;	pending interrupt. Such imprecision isn't that great, but there are
+;	times when that doesn't matter much: if we touch that bit at a time
+;	when the line counter is slightly greater than 32, and at a time when
+;	it doesn't matter whether a scheduled interrupt might get canceled,
+;	the differences in interpretation might not matter. The timing might
+;	now look like this:
+;		Line 000 Vsync start
+;		Line 002 Interrupt request
+;		Line 35-53 (typically 44) Interrupt acknowledge
+;		Line 086 Interrupt
+;		Line 088 Display start
+;		Line 138 Interrupt request
+;		Line 171 MRER bit 4
+;		Line 222/223 Interrupt request
+;		Line 248 Bottom Border start
+;		Line 249 Interrupt acknowledge
+;		Line 274/275 Interrupt
+;
+;	The same approach can be done at line 223 instead of 171, i.e. one
+;	interrupt later.
+;
+;	At first glance, that doesn't save us much from having to run
+;	an interrupt in the middle of the frame, and it might even be worse:
+;	we'd need to save BC, load it with the appropriate value, write to the
+;	Gate Array, and restore it, which looks like 14 NOPs, with the
+;	advantage that we can probably scatter that code a bit across any
+;	region that doesn't otherwise touch BC. However, since the code that
+;	we're running probably has B already pointed to the right location,
+;	and since it probably has some times when one of the other registers
+;	is unused, loading a byte into a register and writing it to the Gate
+;	Array only costs 6 NOPs. Pushing that reasoning further, if any of the
+;	synchronous code reads color data from a table, we simply need to
+;	design the screen such that one of the colors doesn't need to be changed
+;	on line 171 (or 223) and insert the MRER value in that table instead,
+;	at which point this approach costs us no code complexity or timing
+;	difficulties, replacing them with a bit of design difficulty.
+;
+;	Nothing can be perfect, we're left with 3 options:
+;	-Natural option, keep interrupts as original, and race the beam for
+;		32 additional lines. That might be useful to display some
+;		rasters.
+;	-Interrupt delay, run two chunks of semi-synchronous code, overall
+;		44 +/-9 lines and 36 +/- 9 lines.
+;	-Interrupt delar + MRER, run one chunk of semi-synchonous code instead
+;		of two, but have the design constraint that some colors need
+;		to be read from a table where one entry at a mostly fixed
+;		location won't contain actual color data.
 
 	.z80
 	.org	$4000
@@ -374,113 +551,6 @@ Xlp6:
 
 
 	JMP	Loop
-
-
-; Regular interrupts
-;	0 start vsync
-;	2 interrupt 1
-;	8 start top border (R3H)
-;	54 interrupt 2
-;	88 start display ( (R4+1-R7)*8 )
-;	106 interrupt 3
-;	158 interrupt 4
-;	210 interrupt 5
-;	248 start bottom border ( (R4+1-R7+R6)*8 )
-;	262 interrupt 6
-;	312=0 start vsync ( (R4+1)*8 )
-
-; Interrupt shift 1
-;	0 start vsync
-;	2 interrupt request 1
-;	8 start top border (R3H)
-;	~44 (35-53) interrupt acknowledge 1
-;	86 interrupt 2
-;	88 start display ( (R4+1-R7)*8 )
-;	138 interrupt request 3
-;	190 interrupt request 4
-;	242 interrupt request 5
-;	248 start bottom border ( (R4+1-R7+R6)*8 )
-;	249 interrupt acknowledge 3-5
-;	294 interrupt 6
-;	312=0 start vsync ( (R4+1)*8 )
-;	2 vsync interrupt request suppressed, counter == 20
-
-; Interrupt shift 2
-;	0 start vsync
-;	2 interrupt request 1
-;	8 start top border (R3H)
-;	~44 (35-53) interrupt acknowledge 1
-;	86 interrupt 2
-;	88 start display ( (R4+1-R7)*8 )
-;	138 interrupt request 3
-;	190 interrupt request 4
-;	242 interrupt request 5
-;	248 start bottom border ( (R4+1-R7+R6)*8 )
-;	~284 (275-293) interrupt acknowledge 3-5, counter -= 32
-;	312=0 start vsync
-;	2 interrupt line 2 allowed, counter == 40
-
-; MRER reset
-;	0 start vsync
-;	2 interrupt request 1
-;	8 start top border (R3H)
-;	~44 (35-53) interrupt acknowledge 1
-;	86 interrupt 2
-;	88 start display ( (R4+1-R7)*8 )
-;	138 interrupt request 3
-;	190 interrupt request 4
-;	224 MRER bit 4, reset counter
-;	248 start bottom border ( (R4+1-R7+R6)*8 )
-;	249 interrupt acknowledge 3-4
-;	276 interrupt 5
-;	312=0 start vsync
-;	2 interrupt line 2 allowed, counter == 38
-
-; MRER reset + clear request
-;	0 start vsync
-;	2 interrupt request 1
-;	8 start top border (R3H)
-;	~44 (35-53) interrupt acknowledge 1
-;	86 interrupt 2
-;	88 start display ( (R4+1-R7)*8 )
-;	138 interrupt request 3
-;	190 interrupt request 4
-;	224 MRER bit 4, reset counter, clear request
-;	248 start bottom border ( (R4+1-R7+R6)*8 )
-;	276 interrupt 5
-;	312=0 start vsync
-;	2 interrupt line 2 allowed, counter == 38
-
-; MRER clear bit 5
-;	0 start vsync
-;	2 interrupt request 1
-;	8 start top border (R3H)
-;	~44 (35-53) interrupt acknowledge 1
-;	86 interrupt 2
-;	88 start display ( (R4+1-R7)*8 )
-;	138 interrupt request 3
-;	190 interrupt request 4
-;	224 MRER bit 4, counter -= 32
-;	248 start bottom border ( (R4+1-R7+R6)*8 )
-;	249 interrupt acknowledge 3-4
-;	274 interrupt 5
-;	312=0 start vsync
-;	2 interrupt line 2 allowed, counter == 40
-
-; MRER clear bit 5 + clear request
-;	0 start vsync
-;	2 interrupt request 1
-;	8 start top border (R3H)
-;	~44 (35-53) interrupt acknowledge 1
-;	86 interrupt 2
-;	88 start display ( (R4+1-R7)*8 )
-;	138 interrupt request 3
-;	190 interrupt request 4
-;	224 MRER bit 4, counter -= 32, clear request
-;	248 start bottom border ( (R4+1-R7+R6)*8 )
-;	274 interrupt 5
-;	312=0 start vsync
-;	2 interrupt line 2 allowed, counter == 40
 
 
 

@@ -126,7 +126,7 @@
 ;	tries to keep interrupts synchronized with the frame, it re-syncs
 ;	them at Vsync, and it has a different mechanism there to keep
 ;	interrupts far enough apart: if the previous interrupt was less than
-;	32 lines away, it skips the first interrupt of the frame entirely,
+;	32 lines ago, it skips the first interrupt of the frame entirely,
 ;	and goes back to the regular schedule after that. Our actually timing
 ;	would look like this:
 ;		Line 000 Vsync start

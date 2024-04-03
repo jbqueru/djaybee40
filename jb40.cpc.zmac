@@ -548,11 +548,37 @@ Xlp6:
 	EI
 	NOP
 
+	LD	HL,$C400
+	LD	DE,Init
+	LD	C,8
+	LD	B,16
 
+DrawTile:
+	rept 7
+	LD	A,(DE)		; +2
+	LD	(HL),A		; +2
+	INC	DE		; +2
+
+	LD	A,H		; +1
+	ADD	C		; +1
+	LD	H,A		; +1
+	endm
+
+	LD	A,(DE)		; +2
+	LD	(HL),A		; +2
+	INC	DE		; +2
+
+	LD	A,L		; +1
+	ADD	102		; +2
+	LD	L,A		; +1
+	LD	A,H		; +1
+	ADC	$C8		; +2
+	AND	$F7		; +2
+	LD	H,A		; +1
+
+	DJNZ	DrawTile
 
 	JMP	Loop
-
-
 
 Interrupt:
 	PUSH	BC

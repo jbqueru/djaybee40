@@ -548,33 +548,38 @@ Xlp6:
 	EI
 	NOP
 
-	LD	HL,$C400
+	LD	IX,$C400
 	LD	DE,Init
+	LD	HL,Loop
 	LD	C,8
-	LD	B,16
+	LD	B,20
 
 DrawTile:
 	rept 7
-	LD	A,(DE)		; +2
-	LD	(HL),A		; +2
-	INC	DE		; +2
+	LD	A,(DE)
+	LD	(IX),A
+	INC	DE
 
-	LD	A,H		; +1
-	ADD	C		; +1
-	LD	H,A		; +1
+	LD	A,(HL)
+	LD	(IX+1),A
+	INC	HL
+
+	LD	A,IXH
+	ADD	C
+	LD	IXH,A
 	endm
 
-	LD	A,(DE)		; +2
-	LD	(HL),A		; +2
-	INC	DE		; +2
+	LD	A,(DE)
+	LD	(IX),A
+	INC	DE
 
-	LD	A,L		; +1
-	ADD	102		; +2
-	LD	L,A		; +1
-	LD	A,H		; +1
-	ADC	$C8		; +2
-	AND	$F7		; +2
-	LD	H,A		; +1
+	LD	A,IXL
+	ADD	102
+	LD	IXL,A
+	LD	A,IXH
+	ADC	$C8
+	AND	$F7
+	LD	IXH,A
 
 	DJNZ	DrawTile
 

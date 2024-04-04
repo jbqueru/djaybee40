@@ -276,6 +276,9 @@ InitHW:
 ; *** First, disable interrupts, so that the firmware is out of the way ***
 	DI
 
+; *** Set the CPU to Interrupt Mode 1 ***
+	IM	1
+
 ; *** Move stack to its proper address ***
 	LD	SP,$8000
 
@@ -434,8 +437,6 @@ CopyDest2:
 InitDemo2:
 
 ; TODO: clear all RAM.
-
-	IM	1
 
 ; *** Clear framebuffer ***
 	LD	HL,$C000

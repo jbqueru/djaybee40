@@ -607,7 +607,7 @@ Xlp6:
 	NOP
 
 	LD	IX,$C400
-	LD	DE,InitHW
+	LD	DE,InitDemo
 	LD	HL,Loop
 	LD	C,8
 	LD	B,20

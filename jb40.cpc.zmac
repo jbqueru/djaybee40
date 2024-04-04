@@ -460,6 +460,17 @@ ClearRAMLoop:
 ; *** All done, enable interrupts ***
 	EI
 
+; *** Wait for the VSYNC bit to be asserted ***
+	LD	B,$F5
+WaitVBLInitdone:
+	IN	A,(C)
+	RRCA
+	JR	NC,WaitVBLInitDone
+
+; *** Wait until we're far from vsync so that interrupts can re-sync ***
+	HALT
+	HALT
+
 ; #############################################################################
 ; #############################################################################
 ; ###                                                                       ###

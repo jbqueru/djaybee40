@@ -282,9 +282,9 @@ InitHW:
 ; *** Move stack to its proper address ***
 	LD	SP,$8000
 
-; *** Wait for the VSYNC bit to be asserted ***
-InitWaitVBL:
+; *** Wait for the VSYNC bit to be asserted, to avoid tearing ***
 	LD	B,$F5
+InitWaitVBL:
 	IN	A,(C)
 	RRCA
 	JR	NC,InitWaitVBL
@@ -473,8 +473,8 @@ ClearRAMLoop:
 
 Loop:
 ; *** Wait for the VSYNC bit to be asserted ***
-WaitVBL:
 	LD	B,$F5
+WaitVBL:
 	IN	A,(C)
 	RRCA
 	JR	NC,WaitVBL

@@ -439,15 +439,15 @@ ClearRAMLoop:
 ; *** Set up proper palette ***
 	LD	BC,$7F01
 	OUT	(C),C
-	LD	D,$40
+	LD	D,$40		; color 1 is grey
 	OUT	(C),D
 	INC	C
 	OUT	(C),C
-	LD	D,$4B
+	LD	D,$4B		; color 2 is white
 	OUT	(C),D
 	INC	C
 	OUT	(C),C
-	LD	D,$4F
+	LD	D,$4F		; color 3 is pastel magenta
 	OUT	(C),D
 
 	JR	InitDemo2	; jump over the interrupt handler ***

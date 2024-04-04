@@ -272,7 +272,7 @@
 ; #############################################################################
 ; #############################################################################
 
-Init:
+InitHW:
 ; *** First, disable interrupts, so that the firmware is out of the way ***
 	DI
 
@@ -377,7 +377,17 @@ Init:
 	XOR	A
 	OUT	(C),A
 
-; TODO: move code to execution location.
+; *** Move code to execution location ***
+	LD	DE,InitDemo
+	LD	HL,EndDemo
+	;CP	A		; clear carry
+	SBC	HL,DE
+        LD	B,H
+        LD	C,L
+	LD	HL,CopyStart
+	LD	DE,InitDemo
+	LDIR
+	JP	InitDemo
 
 ; #############################################################################
 ; #############################################################################
@@ -388,6 +398,10 @@ Init:
 ; ###                                                                       ###
 ; #############################################################################
 ; #############################################################################
+
+CopyStart:
+	.phase	$40
+InitDemo:
 
 ; TODO: clear all RAM.
 
@@ -549,7 +563,7 @@ Xlp6:
 	NOP
 
 	LD	IX,$C400
-	LD	DE,Init
+	LD	DE,InitHW
 	LD	HL,Loop
 	LD	C,8
 	LD	B,20
@@ -599,3 +613,5 @@ ILoop:
 	POP	BC
 	EI
 	RET
+
+EndDemo:

@@ -276,8 +276,8 @@ InitHW:
 ; *** First, disable interrupts, so that the firmware is out of the way ***
 	DI
 
-; *** Get stack set up in lower 48kB ***
-	LD	SP,$C000
+; *** Move stack to its proper address ***
+	LD	SP,$8000
 
 ; *** Wait for the VSYNC bit to be asserted ***
 InitWaitVBL:

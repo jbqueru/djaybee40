@@ -279,6 +279,13 @@ InitHW:
 ; *** Get stack set up in lower 48kB ***
 	LD	SP,$C000
 
+; *** Wait for the VSYNC bit to be asserted ***
+InitWaitVBL:
+	LD	B,$F5
+	IN	A,(C)
+	RRCA
+	JR	NC,InitWaitVBL
+
 ; *** Disable ROMs, switch to mode 1 ***
 	LD	BC,$7F00 + 10001101b
 	OUT	(C),C

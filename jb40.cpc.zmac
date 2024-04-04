@@ -421,23 +421,12 @@ InitWaitVBL:
 ; #############################################################################
 ; #############################################################################
 
+; *** Boilerplate to help copy the code in place ***
 CopySourceStart1:
 	.phase	$0
 CopyDest1:
+
 InitDemo:
-	JR	InitDemo2
-	.dephase
-CopySourceEnd1:
-
-CopySourceStart2:
-	.phase	$38
-CopyDest2:
-	EI
-	RET
-InitDemo2:
-
-; TODO: clear all RAM.
-
 ; *** Clear RAM ***
 	LD	HL,EndCode
 	XOR	A
@@ -447,15 +436,36 @@ ClearRAMLoop:
 	CP	H
 	JR	NZ, ClearRAMLoop
 
+	JR	InitDemo2	; jump over the interrupt handler ***
+
+
+; *** Boilerplate to help copy the code in place ***
+	.dephase
+CopySourceEnd1:
+
+CopySourceStart2:
+	.phase	$38
+CopyDest2:
+
+; *** The interrupt handler ***
+	EI
+	RET
+
+
+InitDemo2:
 ; *** Set up proper palette ***
 	LD	BC,$7F01
 	OUT	(C),C
-	LD	C,$40
+	LD	D,$40
+	OUT	(C),D
+	INC	C
 	OUT	(C),C
-	LD	C,$02
+	LD	D,$4B
+	OUT	(C),D
+	INC	C
 	OUT	(C),C
-	LD	C,$4B
-	OUT	(C),C
+	LD	D,$4F
+	OUT	(C),D
 
 ; *** All done, enable interrupts ***
 	EI

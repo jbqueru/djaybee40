@@ -583,7 +583,7 @@ DrawTile:
 
 	DJNZ	DrawTile
 
-	JMP	Loop
+	JP	Loop
 
 Interrupt:
 	PUSH	BC

@@ -643,21 +643,6 @@ DrawTile:
 
 	JP	Loop
 
-Interrupt:
-	PUSH	BC
-	LD	BC,$7F10
-	OUT	(C),C
-	LD	C,$48
-	OUT	(C),C
-	LD	B,14
-ILoop:
-	DJNZ	ILoop
-	LD	BC,$7F4F
-	OUT	(C),C
-	POP	BC
-	EI
-	RET
-
 EndCode:
 	.dephase
 CopySourceEnd2:

@@ -438,14 +438,14 @@ InitDemo2:
 
 ; TODO: clear all RAM.
 
-; *** Clear framebuffer ***
-	LD	HL,$C000
-	LD	A,L
-ClearFBLoop:
+; *** Clear RAM ***
+	LD	HL,EndCode
+	XOR	A
+ClearRAMLoop:
 	LD	(HL),A
 	INC	HL
-	CMP	H
-	JR	NZ, ClearFBLoop
+	CP	H
+	JR	NZ, ClearRAMLoop
 
 ; *** Set up proper palette ***
 	LD	BC,$7F01
@@ -636,5 +636,6 @@ ILoop:
 	EI
 	RET
 
+EndCode:
 	.dephase
 CopySourceEnd2:

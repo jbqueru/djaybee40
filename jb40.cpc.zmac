@@ -260,6 +260,56 @@
 ; #############################################################################
 ; #############################################################################
 
+_PPI_PORT_A_L	.equ	$F4		; pppppppp
+					; ||||||||
+					; ++++++++-- PSG data
+_PPI_PORT_A_H	.equ	(_PPI_PORT_A_L << 8)
+
+_PPI_PORT_B_L	.equ	$F5		; cpxrbbbv
+					; ||||||||
+					; |||||||+-- CRTC VSync
+					; ||||+++--- Brand
+					; ||||		0 = Isp (unused)
+					; ||||		1 = Triumph (unused)
+					; ||||		2 = Saisho (unused)
+					; ||||		2 = Solavox (unused)
+					; ||||		4 = Awa
+					; ||||		5 = Schneider
+					; ||||		6 = Orion
+					; ||||		7 = Amstrad
+					; |||+------ Region. 1 = PAL, 0 = NTSC
+					; ||+------- Expansion port /EXP pin
+					; |+-------- Printer ready. 0 = Ready
+					; +--------- Cassette data in
+_PPI_PORT_B_H	.equ	(_PPI_PORT_B_L << 8)
+
+_PPI_PORT_C_L	.equ	$F6		; ppcmkkkk
+					; ||||||||
+					; ||||++++-- Keyboard row to scan
+					; |||+------ Cassette motor. 1 = On
+					; ||+------- Cassette data out
+					; ++-------- PSG mode
+					;		00 = inactive
+					;		01 = read
+					;		10 = write
+					;		11 = control
+_PPI_PORT_C_H	.equ	(_PPI_PORT_C_L << 8)
+
+_PPI_CONTROL_L	.equ	$F7		; 0...bbbv
+					;     ||||
+					;     |||+-- Bit value to be written
+					;     +++--- Bit selection in port C
+
+					; 1xxaumbc
+					;  |||||||
+					;  ||||||+-- Port CL direction. 1 = In
+					;  |||||+--- Port B direction. 1 = In
+					;  ||||+---- Ports B+CL Mode
+					;  |||+----- Port CU direction. 1 = In
+					;  ||+------ Port A direction. 1 = In
+					;  ++------- Ports A+CU Mode
+_PPI_CONTROL_H	.equ	(_PPI_CONTROL_L << 8)
+
 ; TODO!!!
 
 ; #############################################################################
@@ -283,7 +333,7 @@ InitHW:
 	LD	SP,$8000
 
 ; *** Wait for the VSYNC bit to be asserted, to avoid tearing ***
-	LD	B,$F5
+	LD	B,_PPI_PORT_B_L
 InitWaitVBL:
 	IN	A,(C)
 	RRCA
@@ -365,8 +415,8 @@ InitWaitVBL:
 	OUT	(C),C
 
 
-; *** Set 8255 to default mode (register A as write) ***
-	LD	BC,($F7 << 8) + 10000010b
+; *** Set 8255 to default mode (registers A and B as output mode 0) ***
+	LD	BC,_PPI_CONTROL_H + 10000010b
 
 ; *** Basic AY-3-8912 setup - mixer off ***
 	LD	BC,($F4 << 8) + 7
@@ -472,7 +522,7 @@ InitDemo2:
 	EI
 
 ; *** Wait for the VSYNC bit to be asserted ***
-	LD	B,$F5
+	LD	B,_PPI_PORT_B_L
 WaitVBLInitdone:
 	IN	A,(C)
 	RRCA
@@ -495,7 +545,7 @@ WaitVBLInitdone:
 
 Loop:
 ; *** Wait for the VSYNC bit to be asserted ***
-	LD	B,$F5
+	LD	B,_PPI_PORT_B_L
 WaitVBL:
 	IN	A,(C)
 	RRCA

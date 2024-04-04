@@ -385,15 +385,27 @@ InitWaitVBL:
 	OUT	(C),A
 
 ; *** Move code to execution location ***
-	LD	DE,InitDemo
-	LD	HL,EndDemo
-	;CP	A		; clear carry
+	LD	DE,CopySourceStart1
+	LD	HL,CopySourceEnd1
+;	CP	A		; clear carry
 	SBC	HL,DE
-        LD	B,H
-        LD	C,L
-	LD	HL,CopyStart
-	LD	DE,InitDemo
+	LD	B,H
+	LD	C,L
+	EX	DE,HL
+	LD	DE,CopyDest1
 	LDIR
+
+	LD	DE,CopySourceStart2
+	LD	HL,CopySourceEnd2
+;	CP	A		; clear carry
+	SBC	HL,DE
+	LD	B,H
+	LD	C,L
+	EX	DE,HL
+	LD	DE,CopyDest2
+	LDIR
+
+
 	JP	InitDemo
 
 ; #############################################################################
@@ -406,20 +418,22 @@ InitWaitVBL:
 ; #############################################################################
 ; #############################################################################
 
-CopyStart:
-	.phase	$40
+CopySourceStart1:
+	.phase	$0
+CopyDest1:
 InitDemo:
+	JR	InitDemo2
+	.dephase
+CopySourceEnd1:
+
+CopySourceStart2:
+	.phase	$38
+CopyDest2:
+	EI
+	RET
+InitDemo2:
 
 ; TODO: clear all RAM.
-
-; *** Set our own interrupt routine ***
-;	LD	A,$C3		; C3 = unconditional jump
-;	LD	($38),A
-;	LD	HL,Interrupt
-;	LD	($39),HL
-
-	LD	HL,$C9FB	; FB = EI, C9 = RET, little-endian
-	LD	($38),HL
 
 	IM	1
 
@@ -621,4 +635,5 @@ ILoop:
 	EI
 	RET
 
-EndDemo:
+	.dephase
+CopySourceEnd2:

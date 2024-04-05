@@ -500,6 +500,10 @@ ClearRAMLoop:
 	LD	D,$4F		; color 3 is pastel magenta
 	OUT	(C),D
 
+; *** Initial framebuffer address ***
+	LD	HL,$C000
+	LD	(front_buffer),HL
+
 	JR	InitDemo2	; jump over the interrupt handler ***
 
 
@@ -542,25 +546,58 @@ WaitVBLInitdone:
 ; #############################################################################
 ; #############################################################################
 
-
 Loop:
+
+; ##########################
+; ##########################
+; ###                    ###
+; ###  Video management  ###
+; ###                    ###
+; ##########################
+; ##########################
+
 ; *** Wait for the VSYNC bit to be asserted ***
-	LD	B,_PPI_PORT_B_L
+	LD	B,_PPI_PORT_B_L	; This port contains the Vsync bit
 WaitVBL:
-	IN	A,(C)
-	RRCA
-	JR	NC,WaitVBL
+	IN	A,(C)		; Read from the port
+	RRCA			; Extract low bit (Vsync) into carry
+	JR	NC,WaitVBL	; Retry as long as carry is not set
 
-; *** Shift interrupts ***
-	DI
+; *** Tweak interrupts ***
+	DI			; Disable interrupts to offset later ones
 
-	LD	HL,(0)
+; *************************
+; **                     **
+; ** Advance framebuffer **
+; **                     **
+; *************************
+
+	LD	HL,(front_buffer)
+	BIT	6,H
+	JR	Z,FBLowToHigh
+
+	RES	6,H
 	INC	HL
-	LD	A,00000011b
-	AND	H
-	OR	00110000b
-	LD	H,A
-	LD	(0),HL
+	INC	HL
+	RES	3,H
+	JR	NewFBDone
+
+FBLowToHigh:
+	SET	6,H
+NewFBDone:
+	LD	(front_buffer),HL
+
+	LD	HL,(front_buffer)
+	SRL	H
+	RR	L
+	BIT	5,H
+	JZ	FBPickLow
+	SET	4,H
+	JR	FBPickDone
+FBPickLow:
+	RES	4,H
+FBPickDone:
+	SET	5,H
 
 	LD	BC,($BC << 8) + 12
 	OUT	(C),C
@@ -694,5 +731,9 @@ DrawTile:
 	JP	Loop
 
 EndCode:
+
+front_buffer	.equ	EndCode
+
+last_var	.equ	front_buffer + 2
 	.dephase
 CopySourceEnd2:

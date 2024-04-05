@@ -500,9 +500,11 @@ ClearRAMLoop:
 	LD	D,$4F		; color 3 is pastel magenta
 	OUT	(C),D
 
-; *** Initial framebuffer address ***
-	LD	HL,$C000
-	LD	(front_buffer),HL
+; *** Initialize framebuffer addresses ***
+	LD	HL,$8000
+	LD	(fb_front),HL
+	LD	H,$C0
+	LD	(fb_next),HL
 
 	JR	InitDemo2	; jump over the interrupt handler ***
 
@@ -572,38 +574,40 @@ WaitVBL:
 ; **                     **
 ; *************************
 
-	LD	HL,(front_buffer)
-	BIT	6,H
-	JR	Z,FBLowToHigh
+; *** Advance the sequence ***
+	LD	HL,(fb_front)
+	LD	(fb_back),HL
+	LD	HL,(fb_next)
+	LD	(fb_front),HL
 
-	RES	6,H
+; *** 1 byte per frmae = 2 bytes every 2 frames ***
+	LD	HL,(fb_back)
 	INC	HL
 	INC	HL
-	RES	3,H
-	JR	NewFBDone
+	RES	3,H		; wraparound in 16kB segment ; bit 3H = 2kB
+	LD	(fb_next),HL
 
-FBLowToHigh:
-	SET	6,H
-NewFBDone:
-	LD	(front_buffer),HL
+; *** Program CRTC ***
+	LD	HL,(fb_front)
 
-	LD	HL,(front_buffer)
-	SRL	H
-	RR	L
-	BIT	5,H
+	SRL	H		; shift to the right
+	RR	L		; continue shifting to the right
+
+	BIT	5,H		; copy bit instead of shifting it
 	JZ	FBPickLow
 	SET	4,H
 	JR	FBPickDone
 FBPickLow:
 	RES	4,H
 FBPickDone:
-	SET	5,H
+	SET	5,H		; always set, our buffers are in high segments
 
 	LD	BC,($BC << 8) + 12
 	OUT	(C),C
 	INC	B
 	OUT	(C),H
-	LD	BC,($BC << 8) + 13
+	DEC	B
+	INC	C
 	OUT	(C),C
 	INC	B
 	OUT	(C),L
@@ -732,8 +736,10 @@ DrawTile:
 
 EndCode:
 
-front_buffer	.equ	EndCode
+fb_back		.equ	EndCode		; previous framebuffer address
+fb_front	.equ	fb_back +2	; current framebuffer address
+fb_next		.equ	fb_front + 2	; next framebuffer address
 
-last_var	.equ	front_buffer + 2
+last_var	.equ	fb_next + 2
 	.dephase
 CopySourceEnd2:

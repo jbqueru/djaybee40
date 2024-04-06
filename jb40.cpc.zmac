@@ -697,40 +697,68 @@ Xlp6:
 	EI
 	NOP
 
-	LD	IX,$C400
-	LD	DE,InitDemo
-	LD	HL,Loop
-	LD	C,8
+
+	LD	HL,InitDemo
 	LD	B,20
+TilesOnStack:
+	PUSH	HL
+	DJNZ	TilesOnStack
 
+	LD	HL,$C000
+	LD	DE,$8000
+	EXX
+	LD	B,20
 DrawTile:
-	rept 7
+	EXX
+	POP	BC
+	rept	7
 	LD	A,(DE)
-	LD	(IX),A
-	INC	DE
+	LD	(HL),A
+	INC	L
+	LD	A,(BC)
+	LD	(HL),A
 
-	LD	A,(HL)
-	LD	(IX+1),A
-	INC	HL
+	LD	A,D
+	ADD	8
+	LD	D,A
 
-	LD	A,IXH
-	ADD	C
-	LD	IXH,A
+	INC	BC
+
+	DEC	L
+	LD	A,H
+	ADD	8
+	LD	H,A
 	endm
 
 	LD	A,(DE)
-	LD	(IX),A
-	INC	DE
+	LD	(HL),A
+	INC	L
+	LD	A,(BC)
+	LD	(HL),A
 
-	LD	A,IXL
+	LD	A,E
 	ADD	102
-	LD	IXL,A
-	LD	A,IXH
+	LD	E,A
+	LD	D,A
 	ADC	$C8
-	AND	$F7
-	LD	IXH,A
+	LD	A,D
+	RES	3,D
 
-	DJNZ	DrawTile
+	DEC	L
+
+	LD	A,L
+	ADD	102
+	LD	L,A
+	LD	A,H
+	ADC	$C8
+	LD	H,A
+	RES	3,H
+
+	EXX
+	DEC	B
+	JNZ	DrawTile
+
+
 
 	JP	Loop
 

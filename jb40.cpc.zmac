@@ -736,29 +736,20 @@ DrawTile:
 	LD	A,(BC)
 	LD	(HL),A
 
-	LD	A,E
-	ADD	102
-	LD	E,A
-	LD	D,A
-	ADC	$C8
-	LD	A,D
-	RES	3,D
+	LD	BC,$C866
+
+	EX	DE,HL
+	ADD	HL,BC
+	RES	3,H
+	EX	DE,HL
 
 	DEC	L
 
-	LD	A,L
-	ADD	102
-	LD	L,A
-	LD	A,H
-	ADC	$C8
-	LD	H,A
+	ADD	HL,BC
 	RES	3,H
 
 	EXX
-	DEC	B
-	JNZ	DrawTile
-
-
+	DJNZ	DrawTile
 
 	JP	Loop
 

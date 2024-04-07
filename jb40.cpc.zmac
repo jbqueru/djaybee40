@@ -704,13 +704,14 @@ TilesOnStack:
 	PUSH	HL
 	DJNZ	TilesOnStack
 
-	LD	BC,100
+	LD	BC,101
 
 	LD	HL,(fb_front)
 	ADD	HL,BC
 	RES	3,H
-	INC	L
 	EX	DE,HL
+
+	DEC	C
 
 	LD	HL,(fb_next)
 	ADD	HL,BC

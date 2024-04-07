@@ -558,15 +558,26 @@ Loop:
 ; ##########################
 ; ##########################
 
-; *** Wait for the VSYNC bit to be asserted ***
-	LD	B,_PPI_PORT_B_L	; This port contains the Vsync bit
+; *************************
+; **                     **
+; ** Wait for next VSync **
+; **                     **
+; *************************
+
+	LD	B,_PPI_PORT_B_L		; This port contains the Vsync bit
+WaitNonVBL:
+	IN	A,(C)			; Read from the port
+	RRCA				; Extract low bit (Vsync) into carry
+	JR	C,WaitNonVBL		; Retry as long as carry is set (i.e. as long as we're within VSync)
 WaitVBL:
-	IN	A,(C)		; Read from the port
-	RRCA			; Extract low bit (Vsync) into carry
-	JR	NC,WaitVBL	; Retry as long as carry is not set
+	IN	A,(C)			; Read from the port
+	RRCA				; Extract low bit (Vsync) into carry
+	JR	NC,WaitVBL		; Retry as long as carry is not set (i.e. as long as we're not within VSync)
+
+; *** At this point, the VSync bit just turned on ***
 
 ; *** Disable interrupts so that we can tweak interrupt timing ***
-	DI			; Disable interrupts to offset later ones
+	DI				; Disable interrupts to delay the next interrupt
 
 ; *************************
 ; **                     **

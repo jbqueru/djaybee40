@@ -586,42 +586,42 @@ WaitVBL:
 ; *************************
 
 ; *** Advance the sequence ***
-	LD	HL,(fb_front)	; +5/5
-	LD	(fb_back),HL	; +5/10
-	LD	HL,(fb_next)	; +5/15
-	LD	(fb_front),HL	; +5/20
+	LD	HL,(fb_front)		; +5/5
+	LD	(fb_back),HL		; +5/10
+	LD	HL,(fb_next)		; +5/15
+	LD	(fb_front),HL		; +5/20
 
 ; *** 1 byte per frmae = 2 bytes every 2 frames ***
-	LD	HL,(fb_back)	; +5/25
-	INC	HL		; +2/27
-	INC	HL		; +2/29
-	RES	3,H		; +2/31 wrap in 16kB segment ; bit 3H = 2kB
-	LD	(fb_next),HL	; +5/36
+	LD	HL,(fb_back)		; +5/25
+	INC	HL			; +2/27
+	INC	HL			; +2/29
+	RES	3,H			; +2/31 - wrap in 16kB segment ; bit 3H = 2kB
+	LD	(fb_next),HL		; +5/36
 
 ; *** Program CRTC ***
-	LD	HL,(fb_front)	; +5/41
+	LD	HL,(fb_front)		; +5/41
 
-	SRL	H		; +2/43 shift to the right
-	RR	L		; +2/45 continue shifting to the right
+	SRL	H			; +2/43 - shift to the right
+	RR	L			; +2/45 - continue shifting to the right
 
-	BIT	5,H		; +2/47 copy bit instead of shifting it
-	JR	Z,FBPickLow	; +2/49 (through), +3/50 (taken)
-	SET	4,H		; +2/51
-	JR	FBPickDone	; +3/54
+	BIT	5,H			; +2/47 - copy bit instead of shifting it
+	JR	Z,FBPickLow		; +2/49 (through), +3/50 (taken)
+	SET	4,H			; +2/51
+	JR	FBPickDone		; +3/54
 FBPickLow:
-	RES	4,H		; +2/52
+	RES	4,H			; +2/52
 FBPickDone:
-	SET	5,H		; +2/54-56 our buffers are in high segments
+	SET	5,H			; +2/54-56 - our buffers are in high segments
 
 	LD	BC,($BC << 8) + 12	; +3/57-59
-	OUT	(C),C		; +4/61-63
-	INC	B		; +1/62-64
-	OUT	(C),H		; +4/66-68
-	DEC	B		; +1/67-69
-	INC	C		; +1/68-70
-	OUT	(C),C		; +4/72-74
-	INC	B		; +1/73-75
-	OUT	(C),L		; +4/77-79
+	OUT	(C),C			; +4/61-63
+	INC	B			; +1/62-64
+	OUT	(C),H			; +4/66-68
+	DEC	B			; +1/67-69
+	INC	C			; +1/68-70
+	OUT	(C),C			; +4/72-74
+	INC	B			; +1/73-75
+	OUT	(C),L			; +4/77-79
 
 
 ; Wait between 35 and 53 lines, and enable interrupts

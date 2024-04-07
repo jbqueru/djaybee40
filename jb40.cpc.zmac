@@ -704,8 +704,17 @@ TilesOnStack:
 	PUSH	HL
 	DJNZ	TilesOnStack
 
-	LD	HL,$C000
-	LD	DE,$8000
+	LD	BC,100
+
+	LD	HL,(fb_front)
+	ADD	HL,BC
+	RES	3,H
+	INC	L
+	EX	DE,HL
+
+	LD	HL,(fb_next)
+	ADD	HL,BC
+	RES	3,H
 	EXX
 	LD	B,20
 DrawTile:

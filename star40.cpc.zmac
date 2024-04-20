@@ -280,7 +280,6 @@ InitWaitVBL:
 	LD	HL,$C9FB	; FB = EI, C9 = RET, little-endian
 	LD	($38),HL	; $38 = address of IM 1 interrupt handler
 	EI
-	NOP			; There's one-instruction delay in EI
 
 ; *** Wait to be outside of VSync, to avoid off-center starts ***
 	LD	B,_PPI_PORT_B_L
@@ -312,6 +311,7 @@ WaitVBL:
 	LD	B,33
 Skip2:	DJNZ	Skip2
 	HALT
+	DI
 
 ; Set VGA to color 0
 	LD	BC,$7F00 + 00000000b
@@ -326,6 +326,8 @@ ChangeColors:
 	OUT	(C),A
 	DEC	D
 	JR	NZ,ChangeColors
+
+	EI
 
 	JR	MainLoop
 

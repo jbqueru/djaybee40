@@ -281,6 +281,18 @@ InitWaitVBL:
 	LD	($38),HL	; $38 = address of IM 1 interrupt handler
 	EI
 
+; *** Set basic colors ***
+	LD	B,$7F
+	LD	DE,$014B
+	OUT	(C),D
+	OUT	(C),E
+	LD	DE,$034E
+	OUT	(C),D
+	OUT	(C),E
+
+	LD	A,$F0
+	LD	($F83F),A
+
 ; *** Wait to be outside of VSync, to avoid off-center starts ***
 	LD	B,_PPI_PORT_B_L
 NoVBL:

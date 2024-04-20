@@ -709,9 +709,19 @@ Xlp6:
 	NOP
 
 
-	LD	HL,Tile
-	LD	B,20
+	LD	B,8
+	LD	A,(fb_front)
+	LD	C,A
 TilesOnStack:
+	LD	HL,Tile
+	RRC	C
+	SBC	A
+	AND	$10
+	ADD	L
+	MOV	L,A
+	MOV	A,H
+	ADC	0
+	MOV	H,A
 	PUSH	HL
 	DJNZ	TilesOnStack
 
@@ -728,7 +738,7 @@ TilesOnStack:
 	ADD	HL,BC
 	RES	3,H
 	EXX
-	LD	B,20
+	LD	B,8
 DrawTile:
 	EXX
 	POP	BC
@@ -785,7 +795,10 @@ DrawTile:
 ; #############################################################################
 
 Tile:
+	.defb	0,0,0,0,0,0,0,0
+	.defb	0,0,0,0,0,0,0,0
 	.defb	$0F,$78,$48,$48,$48,$48,$78,$0F
+	.defb	$0F,$E1,$21,$21,$21,$21,$E1,$0F
 
 EndCode:
 

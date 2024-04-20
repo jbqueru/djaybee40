@@ -56,7 +56,7 @@
 
 ; A goal is to create some displays inspired by the Atari 2600 game "Solaris"
 ;
-; Naturally, replicating the colors is only feasible with some mid-frame
+; Naturally, replicating all the colors is only feasible with some mid-frame
 ; palette changes, actually per-line palette changes, which can only be
 ; done by racing the beam for the whole frame.
 ;
@@ -64,10 +64,16 @@
 ; no need to race the beam outside of the frame.
 
 ; The best time to start racing is on the interrupt that occurs on line
-; 54 after CRTC VSync, and to start rendering the frame on line 56. Standard
-; rendering starts on line 72, so we need to move it up by 16 lines. To keep
-; it somewhat centered, 288x224 (mode 1) is a good size that has nice
-; multiples of 32 and fits within 16kB
+; 54 after CRTC VSync, such that any graphics that require to race the beam
+; should start right after that. However, the top line of the screen contains
+; a score in a single color, and doesn't need to race the beam, so that it can
+; start a little bit earlier, on line 48, where the beam-racing starts on line
+; 56. This turns out to be a perfect match for a 256*256 screen, which has
+; plenty of advantages for address computations.
+;
+; Also, since we're racing the beam and changing the palette, there's no need
+; to use mode 0 to have lots of colors on-screen, mode 1 is fine for that,
+; it matches the 4 simultaneous colors of the 2600.
 
 	.z80
 	.org	$4000
@@ -186,54 +192,54 @@ InitWaitVBL:
 	OUT	(C),D
 	OUT	(C),E
 
-; *** Program CRTC ***
+; *** Program CRTC, 288x224 ***
 	LD	BC,($BC << 8) + 0
 	OUT	(C),C
-	LD	BC,($BD << 8) + 63
+	LD	BC,($BD << 8) + 63	; 64 characters per line, do not touch
 	OUT	(C),C
 	LD	BC,($BC << 8) + 1
 	OUT	(C),C
-	LD	BC,($BD << 8) + 40
+	LD	BC,($BD << 8) + 32	; 32 visible chars per line, default 40
 	OUT	(C),C
 	LD	BC,($BC << 8) + 2
 	OUT	(C),C
-	LD	BC,($BD << 8) + 46
+	LD	BC,($BD << 8) + 42	; 42 hsync start, default 46
 	OUT	(C),C
 	LD	BC,($BC << 8) + 3
 	OUT	(C),C
-	LD	BC,($BD << 8) + $8B
+	LD	BC,($BD << 8) + $8E	; 8/14 sync durations, do not touch
 	OUT	(C),C
 	LD	BC,($BC << 8) + 4
 	OUT	(C),C
-	LD	BC,($BD << 8) + 38
+	LD	BC,($BD << 8) + 38	; 39 lines per screen, do not touch
 	OUT	(C),C
 	LD	BC,($BC << 8) + 5
 	OUT	(C),C
-	LD	BC,($BD << 8) + 0
+	LD	BC,($BD << 8) + 0	; 0 extra pixel lines, do not touch
 	OUT	(C),C
 	LD	BC,($BC << 8) + 6
 	OUT	(C),C
-	LD	BC,($BD << 8) + 25
+	LD	BC,($BD << 8) + 32	; 32 visible lines per scrn, default 25
 	OUT	(C),C
 	LD	BC,($BC << 8) + 7
 	OUT	(C),C
-	LD	BC,($BD << 8) + 30
+	LD	BC,($BD << 8) + 33	; 33 vsync start, default 30
 	OUT	(C),C
 	LD	BC,($BC << 8) + 8
 	OUT	(C),C
-	LD	BC,($BD << 8) + 00b
+	LD	BC,($BD << 8) + 00b	; no interlace, do not touch
 	OUT	(C),C
 	LD	BC,($BC << 8) + 9
 	OUT	(C),C
-	LD	BC,($BD << 8) + 7
+	LD	BC,($BD << 8) + 7	; 8 lines per character, do not touch
 	OUT	(C),C
 	LD	BC,($BC << 8) + 12
 	OUT	(C),C
-	LD	BC,($BD << 8) + $30
+	LD	BC,($BD << 8) + $30	; screen starts at address $C000
 	OUT	(C),C
 	LD	BC,($BC << 8) + 13
 	OUT	(C),C
-	LD	BC,($BD << 8) + $00
+	LD	BC,($BD << 8) + $00	; screen starts at address $C000
 	OUT	(C),C
 
 

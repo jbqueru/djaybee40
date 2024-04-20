@@ -1,0 +1,300 @@
+; Copyright 2024 Jean-Baptiste M. "JBQ" "Djaybee" Queru
+;
+; This program is free software: you can redistribute it and/or modify
+; it under the terms of the GNU Affero General Public License as
+; published by the Free Software Foundation, either version 3 of the
+; License, or (at your option) any later version.
+;
+; As an added restriction, if you make the program available for
+; third parties to use on hardware you own, such as public gaming
+; cabinets (whether or not in a gaming arcade, whether or not
+; coin-operated or otherwise for a fee,) the conditions of
+; section 13 will apply even if no network is involved.
+;
+; This program is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+; GNU Affero General Public License for more details.
+;
+; You should have received a copy of the GNU Affero General Public License
+; along with this program. If not, see <https://www.gnu.org/licenses/>.
+;
+; SPDX-License-Identifier: AGPL-3.0-or-later
+
+; Coding style:
+;	- ASCII
+;	- hard tabs, 8 characters wide, except in ASCII art
+;	- 120 columns overall
+;	- Standalone block comments in the first 80 columns
+;	- Code-related block comments allowed in the last 80 columns
+;	- Global symbols for code are CamelCase
+;	- Symbols for variables are snake_case
+;	- Symbols for hardware registers are ALL_CAPS
+;	- Related symbols start with the same prefix (so they sort together)
+;	- Include but comment out instructions that help readability but
+;		don't do anything (e.g. redundant CLC when the carry is
+;		guaranteed already to be clear). The comment symbol should be
+;		where the instruction would be, i.e. not on the first column.
+;		There should be an explanation in a comment.
+;	- Note: rulers at 40, 80 and 120 columns help source width
+
+; #############################################################################
+; #############################################################################
+; #############################################################################
+; ########                                                             ########
+; ########                                                             ########
+; ########                           STAR 40                           ########
+; ########                                                             ########
+; ########          CELEBRATING 40 YEARS OF CODING EXPERIENCE          ########
+; ########                                                             ########
+; ########             A DEMO FOR AMSTRAD CPC 464 TO 6128              ########
+; ########                                                             ########
+; ########                                                             ########
+; #############################################################################
+; #############################################################################
+; #############################################################################
+
+; A goal is to create some displays inspired by the Atari 2600 game "Solaris"
+;
+; Naturally, replicating the colors is only feasible with some mid-frame
+; palette changes, actually per-line palette changes, which can only be
+; done by racing the beam for the whole frame.
+;
+; In turn, since that's costly, the frame should be set up such that there's
+; no need to race the beam outside of the frame.
+
+; The best time to start racing is on the interrupt that occurs on line
+; 54 after CRTC VSync, and to start rendering the frame on line 56. Standard
+; rendering starts on line 72, so we need to move it up by 16 lines. To keep
+; it somewhat centered, 288x224 (mode 1) is a good size that has nice
+; multiples of 32 and fits within 16kB
+
+	.z80
+	.org	$4000
+
+; #############################################################################
+; #############################################################################
+; ###                                                                       ###
+; ###                                                                       ###
+; ###                       CPC Hardware Definitions                        ###
+; ###                                                                       ###
+; ###                                                                       ###
+; #############################################################################
+; #############################################################################
+
+_PPI_PORT_A_L	.equ	$F4		; pppppppp
+					; ||||||||
+					; ++++++++-- PSG data
+_PPI_PORT_A_H	.equ	(_PPI_PORT_A_L << 8)
+
+_PPI_PORT_B_L	.equ	$F5		; cpxrbbbv
+					; ||||||||
+					; |||||||+-- CRTC VSync
+					; ||||+++--- Brand
+					; ||||		0 = Isp (unused)
+					; ||||		1 = Triumph (unused)
+					; ||||		2 = Saisho (unused)
+					; ||||		2 = Solavox (unused)
+					; ||||		4 = Awa
+					; ||||		5 = Schneider
+					; ||||		6 = Orion
+					; ||||		7 = Amstrad
+					; |||+------ Region. 1 = PAL, 0 = NTSC
+					; ||+------- Expansion port /EXP pin
+					; |+-------- Printer ready. 0 = Ready
+					; +--------- Cassette data in
+_PPI_PORT_B_H	.equ	(_PPI_PORT_B_L << 8)
+
+_PPI_PORT_C_L	.equ	$F6		; ppcmkkkk
+					; ||||||||
+					; ||||++++-- Keyboard row to scan
+					; |||+------ Cassette motor. 1 = On
+					; ||+------- Cassette data out
+					; ++-------- PSG mode
+					;		00 = inactive
+					;		01 = read
+					;		10 = write
+					;		11 = control
+_PPI_PORT_C_H	.equ	(_PPI_PORT_C_L << 8)
+
+_PPI_CONTROL_L	.equ	$F7		; 0...bbbv
+					;     ||||
+					;     |||+-- Bit value to be written
+					;     +++--- Bit selection in port C
+
+					; 1xxaumbc
+					;  |||||||
+					;  ||||||+-- Port CL direction. 1 = In
+					;  |||||+--- Port B direction. 1 = In
+					;  ||||+---- Ports B+CL Mode
+					;  |||+----- Port CU direction. 1 = In
+					;  ||+------ Port A direction. 1 = In
+					;  ++------- Ports A+CU Mode
+_PPI_CONTROL_H	.equ	(_PPI_CONTROL_L << 8)
+
+; TODO!!!
+
+; #############################################################################
+; #############################################################################
+; ###                                                                       ###
+; ###                                                                       ###
+; ###                        Hardware Initialization                        ###
+; ###                                                                       ###
+; ###                                                                       ###
+; #############################################################################
+; #############################################################################
+
+InitHW:
+; *** First, disable interrupts, so that the firmware is out of the way ***
+	DI
+
+; *** Set the CPU to Interrupt Mode 1 ***
+	IM	1
+
+; *** Move stack to its proper address ***
+	LD	SP,$8000
+
+; *** Wait for the VSYNC bit to be asserted, to avoid tearing ***
+	LD	B,_PPI_PORT_B_L
+InitWaitVBL:
+	IN	A,(C)
+	RRCA
+	JR	NC,InitWaitVBL
+
+; *** Disable ROMs, switch to mode 1 ***
+	LD	BC,$7F00 + 10001101b
+	OUT	(C),C
+
+; *** Disable 6128 extended RAM ***
+	LD	C,11000000b
+	OUT	(C),C
+
+; *** Black palette ***
+	LD	DE,(00000000b << 8) + 01000000b + $14
+	OUT	(C),D
+	OUT	(C),E
+	INC	D
+	OUT	(C),D
+	OUT	(C),E
+	INC	D
+	OUT	(C),D
+	OUT	(C),E
+	INC	D
+	OUT	(C),D
+	OUT	(C),E
+	LD	D,00010000b
+	OUT	(C),D
+	OUT	(C),E
+
+; *** Program CRTC ***
+	LD	BC,($BC << 8) + 0
+	OUT	(C),C
+	LD	BC,($BD << 8) + 63
+	OUT	(C),C
+	LD	BC,($BC << 8) + 1
+	OUT	(C),C
+	LD	BC,($BD << 8) + 40
+	OUT	(C),C
+	LD	BC,($BC << 8) + 2
+	OUT	(C),C
+	LD	BC,($BD << 8) + 46
+	OUT	(C),C
+	LD	BC,($BC << 8) + 3
+	OUT	(C),C
+	LD	BC,($BD << 8) + $8B
+	OUT	(C),C
+	LD	BC,($BC << 8) + 4
+	OUT	(C),C
+	LD	BC,($BD << 8) + 38
+	OUT	(C),C
+	LD	BC,($BC << 8) + 5
+	OUT	(C),C
+	LD	BC,($BD << 8) + 0
+	OUT	(C),C
+	LD	BC,($BC << 8) + 6
+	OUT	(C),C
+	LD	BC,($BD << 8) + 25
+	OUT	(C),C
+	LD	BC,($BC << 8) + 7
+	OUT	(C),C
+	LD	BC,($BD << 8) + 30
+	OUT	(C),C
+	LD	BC,($BC << 8) + 8
+	OUT	(C),C
+	LD	BC,($BD << 8) + 00b
+	OUT	(C),C
+	LD	BC,($BC << 8) + 9
+	OUT	(C),C
+	LD	BC,($BD << 8) + 7
+	OUT	(C),C
+	LD	BC,($BC << 8) + 12
+	OUT	(C),C
+	LD	BC,($BD << 8) + $30
+	OUT	(C),C
+	LD	BC,($BC << 8) + 13
+	OUT	(C),C
+	LD	BC,($BD << 8) + $00
+	OUT	(C),C
+
+
+; *** Set 8255 to default mode (registers A and B as output mode 0) ***
+	LD	BC,_PPI_CONTROL_H + 10000010b
+
+; *** Basic AY-3-8912 setup - mixer off ***
+	LD	BC,($F4 << 8) + 7
+	OUT	(C),C
+	LD	BC,$F6C0
+	OUT	(C),C
+	LD	BC,$F600
+	OUT	(C),C
+	LD	BC,($F4 << 8) + 0
+	OUT	(C),C
+	LD	BC,$F680
+	OUT	(C),C
+	LD	BC,$F600
+	OUT	(C),C
+
+; *** Turn floppy motors off ***
+	LD	BC,$FA7E
+	XOR	A
+	OUT	(C),A
+
+; *** Loop forever ***
+Forever:
+	JR	Forever
+
+; #############################################################################
+; #############################################################################
+; ###                                                                       ###
+; ###                                                                       ###
+; ###                        Software Initialization                        ###
+; ###                                                                       ###
+; ###                                                                       ###
+; #############################################################################
+; #############################################################################
+
+; #############################################################################
+; #############################################################################
+; ###                                                                       ###
+; ###                                                                       ###
+; ###                               Main Loop                               ###
+; ###                                                                       ###
+; ###                                                                       ###
+; #############################################################################
+; #############################################################################
+
+Loop:
+
+; #############################################################################
+; #############################################################################
+; ###                                                                       ###
+; ###                                                                       ###
+; ###                                 Data                                  ###
+; ###                                                                       ###
+; ###                                                                       ###
+; #############################################################################
+; #############################################################################
+
+EndCode:
+
+last_var	.equ	EndCode

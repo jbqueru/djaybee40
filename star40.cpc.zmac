@@ -347,6 +347,19 @@ Skip2:	DJNZ	Skip2
 	HALT
 	DI
 
+	LD	B,20
+Race:	DJNZ	Race
+	INC	HL
+
+; Set VGA to color 16 (border)
+	LD	BC,$7F00 + 00010000b
+	OUT	(C),C
+	LD	C,$4B
+	OUT	(C),C
+	LD	C,$54
+	OUT	(C),C
+
+
 ; Set VGA to color 0
 	LD	BC,$7F00 + 00000000b
 	OUT	(C),C

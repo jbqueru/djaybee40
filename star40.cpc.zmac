@@ -307,6 +307,28 @@ WaitVBL:
 	RRCA
 	JR	NC,WaitVBL
 
+	LD	HL,$C040
+	LD	IX,WaitVBL
+	LD	E,20
+	LD	D,$88
+	LD	B,27
+Star:	LD	(HL),D
+	LD	A,(IX)
+	INC	IX
+	ADD	E
+	AND	$3F
+	LD	C,A
+	LD	A,L
+	AND	$C0
+	OR	C
+	ADD	64
+	LD	L,A
+	LD	A,0
+	ADC	H
+	LD	H,A
+	DJNZ	Star
+
+
 ; Wait a bit more than 2 lines, then wait for an interrupt (line 54)
 	LD	B,33
 Skip2:	DJNZ	Skip2

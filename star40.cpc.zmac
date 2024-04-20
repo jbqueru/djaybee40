@@ -158,7 +158,7 @@ InitHW:
 	IM	1
 
 ; *** Move stack to its proper address ***
-	LD	SP,$8000
+	LD	SP,$C000
 
 ; *** Wait for the VSYNC bit to be asserted, to avoid tearing ***
 	LD	B,_PPI_PORT_B_L
@@ -265,10 +265,6 @@ InitWaitVBL:
 	XOR	A
 	OUT	(C),A
 
-; *** Loop forever ***
-Forever:
-	JR	Forever
-
 ; #############################################################################
 ; #############################################################################
 ; ###                                                                       ###
@@ -278,6 +274,20 @@ Forever:
 ; ###                                                                       ###
 ; #############################################################################
 ; #############################################################################
+
+; *** Install interrupt handler, and enable interrupts ***
+
+	LD	HL,$C9FB	; FB = EI, C9 = RET, little-endian
+	LD	($38),HL	; $38 = address of IM 1 interrupt handler
+	EI
+	NOP			; There's one-instruction delay in EI
+
+; *** Wait to be outside of VSync, to avoid off-center starts ***
+	LD	B,_PPI_PORT_B_L
+NoVBL:
+	IN	A,(C)
+	RRCA
+	JR	C,NoVBL
 
 ; #############################################################################
 ; #############################################################################
@@ -289,7 +299,35 @@ Forever:
 ; #############################################################################
 ; #############################################################################
 
-Loop:
+MainLoop:
+
+; *** Wait for VSync ***
+	LD	B,_PPI_PORT_B_L
+WaitVBL:
+	IN	A,(C)
+	RRCA
+	JR	NC,WaitVBL
+
+; Wait a bit more than 2 lines, then wait for an interrupt (line 54)
+	LD	B,33
+Skip2:	DJNZ	Skip2
+	HALT
+
+; Set VGA to color 0
+	LD	BC,$7F00 + 00000000b
+	OUT	(C),C
+
+	LD	D,0
+	XOR	A
+ChangeColors:
+	INC	A
+	AND	$1F
+	OR	$40
+	OUT	(C),A
+	DEC	D
+	JR	NZ,ChangeColors
+
+	JR	MainLoop
 
 ; #############################################################################
 ; #############################################################################

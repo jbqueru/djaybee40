@@ -352,7 +352,7 @@ Skip2:	DJNZ	Skip2
 	OUT	(C),C
 
 	LD	D,0
-	XOR	A
+	LD	A,20
 ChangeColors:
 	INC	A
 	AND	$1F

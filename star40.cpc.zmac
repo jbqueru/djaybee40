@@ -448,7 +448,7 @@ Line55:				;		|
 Kernel:
 ;-------------------------------;
 ; Start line 56 (game line 0)	;
-
+				;
 	LD	BC,$7F10	; +3/3		\ Gate Array palette selection: color 16 = border
 	OUT	(C),C		; +4/7		/
 				;
@@ -456,7 +456,7 @@ Kernel:
 	AND	$1F		; +2/10		| Mask it
 	OR	$40		; +2/12		| Gate Array color command
 	OUT	(C),A		; +4/16		/
-
+				;
 	LD	E,10		; +2/18		\ Waste time, loop + nop
 Line56:				;		|
 	DEC	E		; \ +39/57	|
@@ -464,7 +464,7 @@ Line56:				;		|
 	NOP			; +1/58		|
 	NOP			; +1/59		|
 	NOP			; +1/60		/
-
+				;
 	DEC	D		; +1/61		\ Loop over rendering lines
 	JR	NZ,Kernel	; +3/64 (taken)	/
 ;-------------------------------;

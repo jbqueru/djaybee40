@@ -398,7 +398,7 @@ Star:
 
 	LD	HL,$C060
 	LD	C,$0F
-	LD	B,38
+	LD	B,22
 DrawPlanet:
 	LD	(HL),C
 	LD	A,H

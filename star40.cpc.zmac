@@ -320,7 +320,20 @@ WaitVBL:
 	JR	NC,WaitVBL
 
 	LD	HL,stars_x
-	INC	(HL)
+	LD	A,(HL)
+	INC	A
+	INC	A
+	LD	(HL),A
+
+	INC	HL
+
+	LD	A,(HL)
+	INC	A
+	CP	216
+	JR	C,InRange
+	SUB	216
+InRange:
+	LD	(HL),A
 
 	LD	A,(stars_x)
 	LD	C,A
@@ -340,8 +353,26 @@ Bits:
 	ADD	C
 	LD	E,A
 
-	LD	HL,$C040
+	LD	A,(stars_y)
+	LD	B,A
+	AND	7
+	ADD	A
+	ADD	A
+	ADD	A
+	ADD	$C0
+	LD	H,A
+	LD	L,$40
+
+	LD	A,26
+	SRL	B
+	SRL	B
+	SRL	B
+	SUB	B
+	LD	C,A
+	LD	B,0
 	LD	IX,StarX
+	ADD	IX,BC
+
 	LD	B,27
 Star:	LD	(HL),D
 	PUSH	HL

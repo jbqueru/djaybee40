@@ -406,8 +406,8 @@ DrawPlanet:
 	JR	NC,SameCharRow
 	OR	$C0
 	LD	D,A
-	LD	A,L
-	ADD	64
+	LD	A,64
+	ADD	L
 	LD	L,A
 	LD	A,D
 	ADC	0

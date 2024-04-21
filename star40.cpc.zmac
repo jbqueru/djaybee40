@@ -319,10 +319,29 @@ WaitVBL:
 	RRCA
 	JR	NC,WaitVBL
 
+	LD	HL,stars_x
+	INC	(HL)
+
+	LD	A,(stars_x)
+	LD	C,A
+	AND	3
+	LD	B,A
+	LD	D,$88
+	JR	Bits
+Shift:
+	SRL	D
+Bits:
+	DEC	B
+	JP	P,Shift
+
+	SRL	C
+	SRL	C
+	LD	A,64
+	ADD	C
+	LD	E,A
+
 	LD	HL,$C040
 	LD	IX,StarX
-	LD	E,20
-	LD	D,$88
 	LD	B,27
 Star:	LD	(HL),D
 	LD	A,(IX)
@@ -394,4 +413,7 @@ StarX:
 
 EndCode:
 
-last_var	.equ	EndCode
+stars_x		.equ	EndCode
+stars_y		.equ	stars_x + 1
+
+EndVars		.equ	stars_y + 1

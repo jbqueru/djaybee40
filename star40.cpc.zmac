@@ -418,27 +418,30 @@ SameCharRow:
 ;-------------------------------;
 ; Start line 54 (score line 6)	;
 				;
-	HALT			; +35/35
-	DI			; +1/36
-	LD	B,6		; +2/38
-Line54:				;
-	DJNZ	Line54		; +23/61
-	ADD	HL,HL		; +3/64
+	HALT			; +35/35	That's the overall timing from hsync to the interrupt returning
+				;
+	DI			; +1/36		Disable interrupts - we're now racing the beam
+				;
+	LD	B,6		; +2/38		\ Waste time...
+Line54:				;		|
+	DJNZ	Line54		; +23/61	| ... with a loop for space ...
+				;		|
+	NOP			; +1/62		|
+	NOP			; +1/63		| ... and explicit nops for readability
+	NOP			; +1/64		/
 ; End line 54 (score line 6)	;
 ;-------------------------------;
 
 ;-------------------------------;
 ; Start line 55 (score line 7)	;
 				;
-	LD	B,13		; +2/2
-Line55:				;
-	DJNZ	Line55		; +51/53
-	LD	D,216		; +2/55
+	LD	B,15		; +2/2		\ Waste time, loop + nop
+Line55:				;		|
+	DJNZ	Line55		; +59/61	|
+	NOP			; +1/62		/
 				;
-; Set VGA to color 16 (border)	;
-	LD	BC,$7F10 	; +3/58
-	OUT	(C),C		; +4/62
-	LD	C,$4B		; +2/64
+	LD	D,216		; +2/64		Prepare loop counter for rendering core
+				;
 ; End line 55 (score line 7)	;
 ;-------------------------------;
 
@@ -446,23 +449,24 @@ Kernel:
 ;-------------------------------;
 ; Start line 56 (game line 0)	;
 
-	LD	BC,$7F10	; +3/3
-	OUT	(C),C		; +4/7
-	INC	A		; +1/8
-	AND	$1F		; +2/10
-	OR	$40		; +2/12
-	OUT	(C),A		; +4/16
+	LD	BC,$7F10	; +3/3		\ Gate Array palette selection: color 16 = border
+	OUT	(C),C		; +4/7		/
+				;
+	INC	A		; +1/8		\ Next color
+	AND	$1F		; +2/10		| Mask it
+	OR	$40		; +2/12		| Gate Array color command
+	OUT	(C),A		; +4/16		/
 
-	LD	E,10		; +2/18
-Line56:
-	DEC	E		; \ +39/57
-	JR	NZ,Line56	; /
-	NOP			; +1/58
-	NOP			; +1/59
-	NOP			; +1/60
+	LD	E,10		; +2/18		\ Waste time, loop + nop
+Line56:				;		|
+	DEC	E		; \ +39/57	|
+	JR	NZ,Line56	; /		|
+	NOP			; +1/58		|
+	NOP			; +1/59		|
+	NOP			; +1/60		/
 
-	DEC	D		; +1/61
-	JR	NZ,Kernel	; +3/64 (taken)
+	DEC	D		; +1/61		\ Loop over rendering lines
+	JR	NZ,Kernel	; +3/64 (taken)	/
 ;-------------------------------;
 
 	EI

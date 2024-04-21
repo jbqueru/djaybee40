@@ -415,46 +415,57 @@ SameCharRow:
 	LD	H,A
 	DJNZ	DrawPlanet
 
+;-------------------------------;
+; Start line 54 (score line 6)	;
+				;
+	HALT			; +35/35
+	DI			; +1/36
+	LD	B,6		; +2/38
+Line54:				;
+	DJNZ	Line54		; +23/61
+	ADD	HL,HL		; +3/64
+; End line 54 (score line 6)	;
+;-------------------------------;
 
-; Wait a bit more than 2 lines, then wait for an interrupt (line 54)
-	LD	B,33
-Skip2:	DJNZ	Skip2
-	HALT
-	DI
+;-------------------------------;
+; Start line 55 (score line 7)	;
+				;
+	LD	B,13		; +2/2
+Line55:				;
+	DJNZ	Line55		; +51/53
+	LD	D,216		; +2/55
+				;
+; Set VGA to color 16 (border)	;
+	LD	BC,$7F10 	; +3/58
+	OUT	(C),C		; +4/62
+	LD	C,$4B		; +2/64
+; End line 55 (score line 7)	;
+;-------------------------------;
 
-	LD	B,20
-Race:	DJNZ	Race
-	INC	HL
+Kernel:
+;-------------------------------;
+; Start line 56 (game line 0)	;
 
-; Set VGA to color 16 (border)
-	LD	BC,$7F00 + 00010000b
-	OUT	(C),C
-	LD	C,$4B
-	OUT	(C),C
-	LD	C,$54
-	OUT	(C),C
+	LD	BC,$7F10	; +3/3
+	OUT	(C),C		; +4/7
+	INC	A		; +1/8
+	AND	$1F		; +2/10
+	OR	$40		; +2/12
+	OUT	(C),A		; +4/16
 
+	LD	E,10		; +2/18
+Line56:
+	DEC	E		; \ +39/57
+	JR	NZ,Line56	; /
+	NOP			; +1/58
+	NOP			; +1/59
+	NOP			; +1/60
 
-; Set VGA to color 0
-	LD	BC,$7F00 + 00000000b
-	OUT	(C),C
-
-	LD	D,0
-	LD	A,20
-ChangeColors:
-	INC	A
-	LD	A,20
-	AND	$1F
-	OR	$40
-	OUT	(C),A
-	DEC	D
-	JR	NZ,ChangeColors
+	DEC	D		; +1/61
+	JR	NZ,Kernel	; +3/64 (taken)
+;-------------------------------;
 
 	EI
-	HALT
-	HALT
-	HALT
-	HALT
 	LD	B,27
 	XOR	A
 EraseStar:

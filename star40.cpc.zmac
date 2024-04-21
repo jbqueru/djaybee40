@@ -286,6 +286,9 @@ InitWaitVBL:
 	LD	DE,$014B
 	OUT	(C),D
 	OUT	(C),E
+	LD	DE,$0257
+	OUT	(C),D
+	OUT	(C),E
 	LD	DE,$0343
 	OUT	(C),D
 	OUT	(C),E
@@ -392,6 +395,25 @@ Star:
 	LD	(HL),D
 	PUSH	HL
 	DJNZ	Star
+
+	LD	HL,$C060
+	LD	C,$0F
+	LD	B,38
+DrawPlanet:
+	LD	(HL),C
+	LD	A,H
+	ADD	8
+	JR	NC,SameCharRow
+	OR	$C0
+	LD	D,A
+	LD	A,L
+	ADD	64
+	LD	L,A
+	LD	A,D
+	ADC	0
+SameCharRow:
+	LD	H,A
+	DJNZ	DrawPlanet
 
 
 ; Wait a bit more than 2 lines, then wait for an interrupt (line 54)

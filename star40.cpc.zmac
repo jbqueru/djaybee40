@@ -344,6 +344,7 @@ Bits:
 	LD	IX,StarX
 	LD	B,27
 Star:	LD	(HL),D
+	PUSH	HL
 	LD	A,(IX)
 	INC	IX
 	ADD	E
@@ -394,8 +395,18 @@ ChangeColors:
 	JR	NZ,ChangeColors
 
 	EI
+	HALT
+	HALT
+	HALT
+	HALT
+	LD	B,27
+	XOR	A
+EraseStar:
+	POP	HL
+	LD	(HL),A
+	DJNZ	EraseStar
 
-	JR	MainLoop
+	JP	MainLoop
 
 ; #############################################################################
 ; #############################################################################

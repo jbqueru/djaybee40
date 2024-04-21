@@ -361,7 +361,7 @@ Bits:
 	ADD	A
 	ADD	$C0
 	LD	H,A
-	LD	L,$40
+	LD	L,0
 
 	LD	A,26
 	SRL	B
@@ -374,8 +374,7 @@ Bits:
 	ADD	IX,BC
 
 	LD	B,27
-Star:	LD	(HL),D
-	PUSH	HL
+Star:
 	LD	A,(IX)
 	INC	IX
 	ADD	E
@@ -389,6 +388,9 @@ Star:	LD	(HL),D
 	LD	A,0
 	ADC	H
 	LD	H,A
+
+	LD	(HL),D
+	PUSH	HL
 	DJNZ	Star
 
 

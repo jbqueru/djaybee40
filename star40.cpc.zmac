@@ -415,6 +415,17 @@ SameCharRow:
 	LD	H,A
 	DJNZ	DrawPlanet
 
+	LD	BC,$7F10
+	OUT	(C),C
+	LD	DE,$4B54
+	LD	C,15
+	OUT	(C),D
+Nop64:
+	DEC	C
+	JR	NZ,Nop64
+	NOP
+	OUT	(C),E
+
 ;-------------------------------;
 ; Start line 54 (score line 6)	;
 				;

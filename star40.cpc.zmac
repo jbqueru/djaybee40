@@ -451,16 +451,16 @@ Line55:				;		|
 	DJNZ	Line55		; +59/61	|
 	NOP			; +1/62		/
 				;
-	LD	D,216		; +2/64		Prepare loop counter for rendering core
+	LD	D,27		; +2/64		Prepare loop counter for rendering core
 				;
 ; End line 55 (score line 7)	;
 ;-------------------------------;
 
 Kernel:
 ;-------------------------------;
-; Start line 56 (game line 0)	;
+; Start 8-line block		;
 				;
-	LD	BC,$7F10	; +3/3		\ Gate Array palette selection: color 16 = border
+	LD	BC,$7F10	; +3/3		\ Gate Array palette selection: color 3 = star
 	OUT	(C),C		; +4/7		/
 				;
 	INC	A		; +1/8		\ Next color
@@ -468,16 +468,17 @@ Kernel:
 	OR	$40		; +2/12		| Gate Array color command
 	OUT	(C),A		; +4/16		/
 				;
-	LD	E,10		; +2/18		\ Waste time, loop + nop
+	LD	E,122		; +2/18		\ Waste time, loop + nop
 Line56:				;		|
-	DEC	E		; \ +39/57	|
+	DEC	E		; \ +487/505	| 122*4-1
 	JR	NZ,Line56	; /		|
-	NOP			; +1/58		|
-	NOP			; +1/59		|
-	NOP			; +1/60		/
+	NOP			; +1/506	|
+	NOP			; +1/507	|
+	NOP			; +1/508	/
 				;
-	DEC	D		; +1/61		\ Loop over rendering lines
-	JR	NZ,Kernel	; +3/64 (taken)	/
+	DEC	D		; +1/509	\ Loop over rendering lines
+	JR	NZ,Kernel	; +3/512 (taken)/
+; End 8-line block		;
 ;-------------------------------;
 
 	EI

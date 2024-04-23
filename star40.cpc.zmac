@@ -98,6 +98,30 @@
 ;
 ; That leaves color 1 for the starfield.
 
+; ******************
+; *                *
+; * Planet drawing *
+; *                *
+; ******************
+
+; Planets are drawn with (hand-)generated code. Positioning granularity is
+; cut in half in both X and Y: in X, to reduce the number of code slices
+; to generate; in Y, both to reduce the number of code slices to generate
+; and to align with palette changes every other line.
+;
+; A full-size planet is 26x24 pixels, which is approximately round on a
+; PAL display (CPC PAL mode 1 pixels are tall by 32/29, which is the ratio
+; between the 16 MHz CPC master clock and the 14.5 MHz clock of square
+; pixels in interlaced PAL). 26 pixels is guaranteed to take at most
+; 7 bytes to draw (because of the 2-pixel horizontal positioning).
+
+; - - - - % % %
+; - - % % % % %
+; - % % % % % %
+; - % % % % % %
+; % % % % % % %
+; % % % % % % %
+
 
 	.z80
 	.org	$4000
@@ -438,6 +462,21 @@ DrawPlanet:
 SameCharRow:
 	LD	H,A
 	DJNZ	DrawPlanet
+
+	LD	IX,$C460
+	LD	(IX-64),C
+	LD	(IX+0),C
+	LD	(IX+1),C
+	LD	(IX+64),C
+
+	LD	A,8
+	ADD	IXH
+	LD	IXH,A
+
+	LD	(IX-64),C
+	LD	(IX+0),C
+	LD	(IX+1),C
+	LD	(IX+64),C
 
 	LD	BC,$7F10
 	OUT	(C),C

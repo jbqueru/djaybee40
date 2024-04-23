@@ -54,6 +54,12 @@
 ; #############################################################################
 ; #############################################################################
 
+; *******************
+; *                 *
+; * High-level view *
+; *                 *
+; *******************
+
 ; A goal is to create some displays inspired by the Atari 2600 game "Solaris"
 ;
 ; Naturally, replicating all the colors is only feasible with some mid-frame
@@ -74,6 +80,24 @@
 ; Also, since we're racing the beam and changing the palette, there's no need
 ; to use mode 0 to have lots of colors on-screen, mode 1 is fine for that,
 ; it matches the 4 simultaneous colors of the 2600.
+
+; **************************
+; *                        *
+; * Palette considerations *
+; *                        *
+; **************************
+
+; Color 0 is used for the background, since that's an easy bit to insert
+; on either side of a register when shifting (ADD, SLA, SRL)
+;
+; In turn, color 3 is used for the player sprite: color 3 can be drawn
+; pixel-exact with a plain OR, so it's appropriate for the topmost graphics.
+;
+; Because of the constraints of palette changes, planets have to be using
+; color 2, so that alternating between 2 and 3 is fast (INC/DEC).
+;
+; That leaves color 1 for the starfield.
+
 
 	.z80
 	.org	$4000
@@ -283,17 +307,17 @@ InitWaitVBL:
 
 ; *** Set basic colors ***
 	LD	B,$7F
-	LD	DE,$014B
+	LD	DE,$014A	; 1 = Starfield, bright yellow
 	OUT	(C),D
 	OUT	(C),E
-	LD	DE,$0257
+	LD	DE,$0257	; 2 = Planets, sky blue
 	OUT	(C),D
 	OUT	(C),E
-	LD	DE,$0343
+	LD	DE,$034F	; 3 = Player, paster magenta
 	OUT	(C),D
 	OUT	(C),E
 
-	LD	A,$F0
+	LD	A,$FF
 	LD	($F83F),A
 
 ; *** Wait to be outside of VSync, to avoid off-center starts ***
@@ -342,7 +366,7 @@ InRange:
 	LD	C,A
 	AND	3
 	LD	B,A
-	LD	D,$88
+	LD	D,$80
 	JR	Bits
 Shift:
 	SRL	D

@@ -115,13 +115,6 @@
 ; pixels in interlaced PAL). 26 pixels is guaranteed to take at most
 ; 7 bytes to draw (because of the 2-pixel horizontal positioning).
 
-; - - - - % % %
-; - - % % % % %
-; - % % % % % %
-; - % % % % % %
-; % % % % % % %
-; % % % % % % %
-
 
 	.z80
 	.org	$4000
@@ -444,24 +437,230 @@ Star:
 	PUSH	HL
 	DJNZ	Star
 
-	LD	HL,$C060
-	LD	C,$0F
-	LD	B,22
-DrawPlanet:
-	LD	(HL),C
-	LD	A,H
-	ADD	8
-	JR	NC,SameCharRow
-	OR	$C0
-	LD	D,A
-	LD	A,64
-	ADD	L
-	LD	L,A
-	LD	A,D
-	ADC	0
-SameCharRow:
-	LD	H,A
-	DJNZ	DrawPlanet
+
+	LD	IX,$C100
+	LD	A,$0F
+	LD	BC,$070E
+	LD	DE,$030C
+	LD	HL,$0108
+
+
+; - - - - - - - - - # # # #
+; - - - - - - - # # # # # #
+; - - - - - # # # # # # # #
+; - - - - # # # # # # # # #
+; - - - # # # # # # # # # #
+; - - # # # # # # # # # # #
+; - # # # # # # # # # # # #
+; - # # # # # # # # # # # #
+; - # # # # # # # # # # # #
+; # # # # # # # # # # # # #
+; # # # # # # # # # # # # #
+; # # # # # # # # # # # # #
+
+
+	LD	(IX-62),B
+	LD	(IX-61),A
+	LD	(IX-60),L
+
+	LD	(IX),B
+	LD	(IX+1),A
+	LD	(IX+2),A
+	LD	(IX+3),A
+	LD	(IX+4),A
+	LD	(IX+5),A
+	LD	(IX+6),L
+
+	LD	(IX+64),B
+	LD	(IX+65),A
+	LD	(IX+66),A
+	LD	(IX+67),A
+	LD	(IX+68),A
+	LD	(IX+69),A
+	LD	(IX+70),L
+
+	LD	A,8
+	ADD	IXH
+	LD	IXH,A
+	LD	A,$0F
+
+	LD	(IX-63),H
+	LD	(IX-62),A
+	LD	(IX-61),A
+	LD	(IX-60),C
+
+	LD	(IX),A
+	LD	(IX+1),A
+	LD	(IX+2),A
+	LD	(IX+3),A
+	LD	(IX+4),A
+	LD	(IX+5),A
+	LD	(IX+6),E
+
+	LD	(IX+64),B
+	LD	(IX+65),A
+	LD	(IX+66),A
+	LD	(IX+67),A
+	LD	(IX+68),A
+	LD	(IX+69),A
+	LD	(IX+70),L
+
+	LD	A,8
+	ADD	IXH
+	LD	IXH,A
+	LD	A,$0F
+
+	LD	(IX-63),B
+	LD	(IX-62),A
+	LD	(IX-61),A
+	LD	(IX-60),A
+	LD	(IX-59),L
+
+	LD	(IX),A
+	LD	(IX+1),A
+	LD	(IX+2),A
+	LD	(IX+3),A
+	LD	(IX+4),A
+	LD	(IX+5),A
+	LD	(IX+6),E
+
+	LD	(IX+64),D
+	LD	(IX+65),A
+	LD	(IX+66),A
+	LD	(IX+67),A
+	LD	(IX+68),A
+	LD	(IX+69),A
+
+	LD	A,8
+	ADD	IXH
+	LD	IXH,A
+	LD	A,$0F
+
+	LD	(IX-63),A
+	LD	(IX-62),A
+	LD	(IX-61),A
+	LD	(IX-60),A
+	LD	(IX-59),E
+
+	LD	(IX),A
+	LD	(IX+1),A
+	LD	(IX+2),A
+	LD	(IX+3),A
+	LD	(IX+4),A
+	LD	(IX+5),A
+	LD	(IX+6),E
+
+	LD	(IX+64),H
+	LD	(IX+65),A
+	LD	(IX+66),A
+	LD	(IX+67),A
+	LD	(IX+68),A
+	LD	(IX+69),C
+
+	LD	A,8
+	ADD	IXH
+	LD	IXH,A
+	LD	A,$0F
+
+	LD	(IX-64),H
+	LD	(IX-63),A
+	LD	(IX-62),A
+	LD	(IX-61),A
+	LD	(IX-60),A
+	LD	(IX-59),C
+
+	LD	(IX),A
+	LD	(IX+1),A
+	LD	(IX+2),A
+	LD	(IX+3),A
+	LD	(IX+4),A
+	LD	(IX+5),A
+	LD	(IX+6),E
+
+	LD	(IX+65),A
+	LD	(IX+66),A
+	LD	(IX+67),A
+	LD	(IX+68),A
+	LD	(IX+69),E
+
+	LD	A,8
+	ADD	IXH
+	LD	IXH,A
+	LD	A,$0F
+
+	LD	(IX-64),D
+	LD	(IX-63),A
+	LD	(IX-62),A
+	LD	(IX-61),A
+	LD	(IX-60),A
+	LD	(IX-59),A
+
+	LD	(IX),A
+	LD	(IX+1),A
+	LD	(IX+2),A
+	LD	(IX+3),A
+	LD	(IX+4),A
+	LD	(IX+5),A
+	LD	(IX+6),E
+
+	LD	(IX+65),B
+	LD	(IX+66),A
+	LD	(IX+67),A
+	LD	(IX+68),A
+	LD	(IX+69),L
+
+	LD	A,8
+	ADD	IXH
+	LD	IXH,A
+	LD	A,$0F
+
+	LD	(IX-64),B
+	LD	(IX-63),A
+	LD	(IX-62),A
+	LD	(IX-61),A
+	LD	(IX-60),A
+	LD	(IX-59),A
+	LD	(IX-58),L
+
+	LD	(IX),A
+	LD	(IX+1),A
+	LD	(IX+2),A
+	LD	(IX+3),A
+	LD	(IX+4),A
+	LD	(IX+5),A
+	LD	(IX+6),E
+
+	LD	(IX+65),H
+	LD	(IX+66),A
+	LD	(IX+67),A
+	LD	(IX+68),C
+
+	LD	A,8
+	ADD	IXH
+	LD	IXH,A
+	LD	A,$0F
+
+	LD	(IX-64),B
+	LD	(IX-63),A
+	LD	(IX-62),A
+	LD	(IX-61),A
+	LD	(IX-60),A
+	LD	(IX-59),A
+	LD	(IX-58),L
+
+	LD	(IX),B
+	LD	(IX+1),A
+	LD	(IX+2),A
+	LD	(IX+3),A
+	LD	(IX+4),A
+	LD	(IX+5),A
+	LD	(IX+6),L
+
+	LD	(IX+66),B
+	LD	(IX+67),A
+	LD	(IX+68),L
+
+
 
 	LD	IX,$C460
 
@@ -652,7 +851,7 @@ StarX:
 
 ColorsPlanet:
 	rept	27
-	defb	$44,$55,$5F,$55
+	defb	$57,$5F,$5B,$5F
 	endm
 
 ColorsPlayer:

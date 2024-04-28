@@ -590,9 +590,9 @@ Line56:				;		|
 ;	EXX			; 1/1
 ;	INC	B		; 1/2
 ;	OUTI			; 5/7
-;	EX	DE,HL		; 1/13
-;	INC	C		; 6/8
-;	OUT	(C),C		; 4/12
+;	EX	DE,HL		; 1/8
+;	INC	C		; 1/9
+;	OUT	(C),C		; 4/13
 ;	INC	B		; 1/14
 ;	OUTI			; 5/19
 ;	EXX			; 1/20

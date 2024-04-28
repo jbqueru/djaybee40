@@ -626,59 +626,6 @@ Line8:
 ; End 8-line block		;
 ;-------------------------------;
 
-;				; change 2 colors:
-;	EXX			; 1/1
-;	LD	A,(DE)		; 2/3
-;	INC	DE		; 2/5
-;	OUT	(C),C		; 4/9
-;	INC	C		; 1/10
-;	OUT	(C),A		; 4/14
-;	LD	A,(HL)		; 2/16
-;	INC	HL		; 2/18
-;	OUT	(C),C		; 4/22
-;	DEC	C		; 1/23
-;	OUT	(C),A		; 4/27
-;	EXX			; 1/28
-
-;				; change 1 of 2 colors:
-;	EXX			; 1/1
-;	LD	A,(DE)		; 2/3
-;	INC	DE		; 2/5
-;	OUT	(C),C		; 4/9
-;	INC	C		; 1/10
-;	OUT	(C),A		; 4/14
-;	EXX			; 1/15
-
-;				; change 1 color same:
-;	EXX			; 1/1
-;	LD	A,(DE)		; 2/3
-;	INC	DE		; 2/5
-;	OUT	(C),A		; 4/9
-;	EXX			; 1/10
-
-;				; change 2 colors alternating:
-;	EXX			; 1/1
-;	LD	A,(DE)		; 2/3
-;	INC	DE		; 2/5
-;	OUT	(C),A		; 4/9
-;	LD	A,(HL)		; 2/11
-;	INC	HL		; 2/13
-;	OUT	(C),C		; 4/17
-;	DEC	C		; 1/18
-;	OUT	(C),A		; 4/22
-;	EXX			; 1/23
-
-;				; change 2 colors alternating with OUTI:
-;	EXX			; 1/1
-;	INC	B		; 1/2
-;	OUTI			; 5/7
-;	EX	DE,HL		; 1/8
-;	INC	C		; 1/9
-;	OUT	(C),C		; 4/13
-;	INC	B		; 1/14
-;	OUTI			; 5/19
-;	EXX			; 1/20
-
 	EI
 	LD	B,27
 	XOR	A

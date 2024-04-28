@@ -586,8 +586,16 @@ Line56:				;		|
 ;	OUT	(C),A		; 4/22
 ;	EXX			; 1/23
 
-
-
+;				; change 2 colors alternating with OUTI:
+;	EXX			; 1/1
+;	INC	B		; 1/2
+;	OUTI			; 5/7
+;	EX	DE,HL		; 1/13
+;	INC	C		; 6/8
+;	OUT	(C),C		; 4/12
+;	INC	B		; 1/14
+;	OUTI			; 5/19
+;	EXX			; 1/20
 
 	EI
 	LD	B,27

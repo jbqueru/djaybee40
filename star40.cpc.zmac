@@ -464,11 +464,16 @@ SameCharRow:
 	DJNZ	DrawPlanet
 
 	LD	IX,$C460
+
+	LD	C,$FF
+
 	LD	(IX-64),C
 	LD	(IX+0),C
 	LD	(IX+1),C
 	LD	(IX+64),C
 
+	LD	B,7
+DrawPlayer:
 	LD	A,8
 	ADD	IXH
 	LD	IXH,A
@@ -477,6 +482,13 @@ SameCharRow:
 	LD	(IX+0),C
 	LD	(IX+1),C
 	LD	(IX+64),C
+
+	DJNZ	DrawPlayer
+
+	LD	BC,$7F02
+	LD	DE,ColorsPlayer
+	LD	HL,ColorsPlanet
+	EXX
 
 	LD	BC,$7F10
 	OUT	(C),C
@@ -488,6 +500,11 @@ Nop64:
 	JR	NZ,Nop64
 	NOP
 	OUT	(C),E
+
+	EXX
+	OUT	(C),C
+	EXX
+	LD	A,$40
 
 ;-------------------------------;
 ; Start line 54 (score line 6)	;
@@ -523,24 +540,89 @@ Kernel:
 ;-------------------------------;
 ; Start 8-line block		;
 				;
-	LD	BC,$7F10	; +3/3		\ Gate Array palette selection: color 3 = star
-	OUT	(C),C		; +4/7		/
-				;
-	INC	A		; +1/8		\ Next color
-	AND	$1F		; +2/10		| Mask it
-	OR	$40		; +2/12		| Gate Array color command
-	OUT	(C),A		; +4/16		/
-				;
-	LD	E,122		; +2/18		\ Waste time, loop + nop
-Line56:				;		|
-	DEC	E		; \ +487/505	| 122*4-1
-	JR	NZ,Line56	; /		|
-	NOP			; +1/506	|
-	NOP			; +1/507	|
-	NOP			; +1/508	/
-				;
-	DEC	D		; +1/509	\ Loop over rendering lines
-	JR	NZ,Kernel	; +3/512 (taken)/
+
+	EXX			; +1/1		Swap registers for palette
+	INC	B		; +1/2		Prepare B for OUTI
+	OUTI			; +5/7		Output color 2: planet
+	EX	DE,HL		; +1/8		Swap DE=planet, HL=player
+	INC	C		; +1/9		C is now 3 (player color)
+	OUT	(C),C		; +4/13		Switch Gate Array to color 3
+	INC	B		; +1/14		Prepare B for OUTI
+	OUTI			; +5/19		Output color 3: player
+	EXX			; +1/20		Swap registers for drawing
+
+	LD	E,26		; +2/22
+Line2:
+	DEC	E		; \ +103/125 (26*4-1)
+	JR	NZ,Line2	; /
+	NOP			; +1/126
+	NOP			; +1/127
+	NOP			; +1/128
+
+	EXX			; +1/1		Swap registers for palette
+	INC	B		; +1/2		Prepare B for OUTI
+	OUTI			; +5/7		Output color 3: player
+	EX	DE,HL		; +1/8		Swap DE=player, HL=planet
+	DEC	C		; +1/9		C is now 2 (planet color)
+	OUT	(C),C		; +4/13		Switch Gate Array to color 2
+	INC	B		; +1/14		Prepare B for OUTI
+	OUTI			; +5/19		Output color 2: planet
+	EXX			; +1/20		Swap registers for drawing
+
+	LD	E,26		; +2/22
+Line4:
+	DEC	E		; \ +103/125 (26*4-1)
+	JR	NZ,Line4	; /
+	NOP			; +1/126
+	NOP			; +1/127
+	NOP			; +1/128
+
+	EXX			; +1/1		Swap registers for palette
+	INC	B		; +1/2		Prepare B for OUTI
+	OUTI			; +5/7		Output color 2: planet
+	EX	DE,HL		; +1/8		Swap DE=planet, HL=player
+	INC	C		; +1/9		C is now 3 (player color)
+	OUT	(C),C		; +4/13		Switch Gate Array to color 3
+	INC	B		; +1/14		Prepare B for OUTI
+	OUTI			; +5/19		Output color 3: player
+	EXX			; +1/20		Swap registers for drawing
+
+	LD	E,26		; +2/22
+Line6:
+	DEC	E		; \ +103/125 (26*4-1)
+	JR	NZ,Line6	; /
+	NOP			; +1/126
+	NOP			; +1/127
+	NOP			; +1/128
+
+	EXX			; +1/1		Swap registers for palette
+	INC	B		; +1/2		Prepare B for OUTI
+	OUTI			; +5/7		Output color 3: player
+	EX	DE,HL		; +1/8		Swap DE=player, HL=planet
+	DEC	C		; +1/9		C is now 2 (planet color)
+	OUT	(C),C		; +4/13		Switch Gate Array to color 2
+	INC	B		; +1/14		Prepare B for OUTI
+	OUTI			; +5/19		Output color 2: planet
+
+	DEC	C		; +1/20		C is now 1 (star color)
+	OUT	(C),C		; +4/24		Switch Gate Array to color 1
+
+	OUT	(C),A		; +4/28		Output color 1: stars
+	INC	A		; +1/29
+	AND	$1F		; +2/31
+	OR	$40		; +2/33
+
+	INC	C		; +1/9		C is now 2 (planet color)
+	OUT	(C),C		; +4/13		Switch Gate Array to color 2
+	EXX			; +1/39
+
+	LD	E,21		; +2/41
+Line8:
+	DEC	E		; \ +83/124 (21*4-1)
+	JR	NZ,Line8	; /
+
+	DEC	D		; +1/125	\ Loop over rendering lines
+	JR	NZ,Kernel	; +3/128 (taken)/
 ; End 8-line block		;
 ;-------------------------------;
 
@@ -620,6 +702,16 @@ EraseStar:
 StarX:
 	defb	54,12,4,13,48,59,34,56,2,28,8,35,36,57,6,35,28,33,46,7,43,26,14,23,47,54,5
 	defb	54,12,4,13,48,59,34,56,2,28,8,35,36,57,6,35,28,33,46,7,43,26,14,23,47,54
+
+ColorsPlanet:
+	rept	27
+	defb	$44,$55,$5F,$55
+	endm
+
+ColorsPlayer:
+	rept	27
+	defb	$5C,$4C,$47,$4C
+	endm
 
 EndCode:
 

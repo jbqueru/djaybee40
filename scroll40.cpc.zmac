@@ -190,7 +190,15 @@ InitHW:
 
 ; *** Set PPI to default mode (AB in, C out, all mode 0) ***
 	LD	BC,_PPI_CONTROL_H + 10010010b
-        OUT	(C),C		; technically OUT (BC),C, address LSB ignored
+        			;   ||||||||
+        			;   |||||||+-- Port CL out
+                                ;   ||||||+--- Port B in
+                                ;   |||||+---- Ports B+CL mode 0
+                                ;   ||||+----- Port CH out
+                                ;   |||+------ Port A in
+                                ;   |++------- Ports A+CH mode 0
+                                ;   +--------- Program mode
+	OUT	(C),C		; technically OUT (BC),C, address LSB ignored
 
 ; *** Set the CPU to Interrupt Mode 1 ***
 	IM	1
@@ -198,39 +206,50 @@ InitHW:
 ; *** Move stack to its proper address ***
 	LD	SP,$C000
 
-; *** Wait for the VSYNC bit to be asserted, to avoid tearing ***
+; *** Wait for beginning of VSYNC, to avoid tearing ***
 	LD	B,_PPI_PORT_B_L
-InitWaitVBL:
+InitWaitVBL1:
 	IN	A,(C)		; technically IN A,(BC), address LSB ignored
 	RRCA			; extract low bit into carry
-	JR	NC,InitWaitVBL	; loop until VSYNC bit set
+	JR	C,InitWaitVBL1	; loop until VSYNC bit not set
+InitWaitVBL2:
+	IN	A,(C)		; technically IN A,(BC), address LSB ignored
+	RRCA			; extract low bit into carry
+	JR	NC,InitWaitVBL2	; loop until VSYNC bit set
 
 ; *** Disable ROMs, switch to mode 1 ***
-	LD	BC,$7F00 + 10001101b
-	OUT	(C),C
-
-; *** Disable 6128 extended RAM ***
-	LD	C,11000000b
-	OUT	(C),C
+	LD	BC,_VGA_PORT_H +  10001101b
+        			; || |||||
+				; || |||++-- Graphics mode 1
+				; || ||+---- Disable lower ROM
+				; || |+----- Disable upper ROM
+				; || +------ Leave interrupts untouched
+				; ++-------- Interrupt/ROM/Graphics mode
+	OUT	(C),C		; technically OUT (BC),C, address LSB ignored
 
 ; *** Black palette ***
-	LD	DE,(00000000b << 8) + 01000000b + $14
-	OUT	(C),D
-	OUT	(C),E
-	INC	D
-	OUT	(C),D
-	OUT	(C),E
-	INC	D
-	OUT	(C),D
-	OUT	(C),E
-	INC	D
-	OUT	(C),D
-	OUT	(C),E
-	LD	D,00010000b
-	OUT	(C),D
-	OUT	(C),E
+	LD	B,_VGA_PORT_L
+	LD	DE,(00000000b << 8) + 01000000b + $14	; $14 is black
+	OUT	(C),D		; technically OUT (BC),D, address LSB ignored
+	OUT	(C),E		; technically OUT (BC),E, address LSB ignored
+	INC	D		; switch to color 1
+	OUT	(C),D		; technically OUT (BC),D, address LSB ignored
+	OUT	(C),E		; technically OUT (BC),E, address LSB ignored
+	INC	D		; switch to color 2
+	OUT	(C),D		; technically OUT (BC),D, address LSB ignored
+	OUT	(C),E		; technically OUT (BC),E, address LSB ignored
+	INC	D		; switch to color 3
+	OUT	(C),D		; technically OUT (BC),D, address LSB ignored
+	OUT	(C),E		; technically OUT (BC),E, address LSB ignored
+	LD	D,00010000b	; switch to border
+	OUT	(C),D		; technically OUT (BC),D, address LSB ignored
+	OUT	(C),E		; technically OUT (BC),E, address LSB ignored
 
-; *** Program CRTC, 288x224 ***
+; *** Disable 6128 extended RAM ***
+	LD	BC,_RAM_CONFIG_H + 11000000b
+	OUT	(C),C		; technically OUT (BC),C, address LSB ignored
+
+; *** Program CRTC ***
 	LD	BC,($BC << 8) + 0
 	OUT	(C),C
 	LD	BC,($BD << 8) + 63	; 64 characters per line, do not touch

@@ -1,0 +1,340 @@
+; Copyright 2024 Jean-Baptiste M. "JBQ" "Djaybee" Queru
+;
+; This program is free software: you can redistribute it and/or modify
+; it under the terms of the GNU Affero General Public License as
+; published by the Free Software Foundation, either version 3 of the
+; License, or (at your option) any later version.
+;
+; As an added restriction, if you make the program available for
+; third parties to use on hardware you own, such as public gaming
+; cabinets (whether or not in a gaming arcade, whether or not
+; coin-operated or otherwise for a fee,) the conditions of
+; section 13 will apply even if no network is involved.
+;
+; This program is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+; GNU Affero General Public License for more details.
+;
+; You should have received a copy of the GNU Affero General Public License
+; along with this program. If not, see <https://www.gnu.org/licenses/>.
+;
+; SPDX-License-Identifier: AGPL-3.0-or-later
+
+; Coding style:
+;	- ASCII
+;	- hard tabs, 8 characters wide, except in ASCII art
+;	- 120 columns overall
+;	- Standalone block comments in the first 80 columns
+;	- Code-related block comments allowed in the last 80 columns
+;	- Global symbols for code are CamelCase
+;	- Symbols for variables are snake_case
+;	- Symbols for hardware registers are ALL_CAPS
+;	- Related symbols start with the same prefix (so they sort together)
+;	- Include but comment out instructions that help readability but
+;		don't do anything (e.g. redundant CLC when the carry is
+;		guaranteed already to be clear). The comment symbol should be
+;		where the instruction would be, i.e. not on the first column.
+;		There should be an explanation in a comment.
+;	- Note: rulers at 40, 80 and 120 columns help source width
+
+; #############################################################################
+; #############################################################################
+; #############################################################################
+; ########                                                             ########
+; ########                                                             ########
+; ########                          SCROLL 40                          ########
+; ########                                                             ########
+; ########          CELEBRATING 40 YEARS OF CODING EXPERIENCE          ########
+; ########                                                             ########
+; ########             A DEMO FOR AMSTRAD CPC 464 TO 6128              ########
+; ########                                                             ########
+; ########                                                             ########
+; #############################################################################
+; #############################################################################
+; #############################################################################
+
+; *******************
+; *                 *
+; * High-level view *
+; *                 *
+; *******************
+
+; After several attempts at things that were too ambitious, this demo goes for
+; modest goals in order to have a better chance of reaching completion.
+
+; The plan is to make a horizontal text scroller.
+; The display is a 400*80 mode 1 framebuffer.
+; Combining hardware scrolling and page-flipping, with a 4-pixel offset
+; between buffers, such that the scrolling speed is 200 pixels per second.
+
+; As a stretch goal, there might be some sprite logo displayed on top of the
+; text.
+
+	.z80
+	.org	$4000
+
+; #############################################################################
+; #############################################################################
+; ###                                                                       ###
+; ###                                                                       ###
+; ###                       CPC Hardware Definitions                        ###
+; ###                                                                       ###
+; ###                                                                       ###
+; #############################################################################
+; #############################################################################
+
+; *** VGA - Amstrad Video Gate Array (a.k.a. Gate Array) ***
+
+_VGA_PORT_L	.equ	$7F		; 00xbpppp
+					;    |||||
+                                        ;    |++++-- Palette entry (when b=0)
+					;    +------ Border
+
+					; 01xccccc
+                                        ;    |||||
+                                        ;    +++++-- Color value
+
+					; 100iulmm
+                                        ;    |||||
+                                        ;    |||++-- Graphics mode (0-2)
+                                        ;    ||+---- Lower ROM enable
+                                        ;    |+----- Upper ROM enable
+                                        ;    +------ Interrupt counter reset
+
+_VGA_PORT_H	.equ	(_VGA_PORT_L << 8)
+
+; *** RAM config - Amstrad PAL8L16 (same address as Video Gate Array) ***
+
+_RAM_CONFIG_L	.equ	$7F		; 11000rrr
+					;      |||
+                                        ;      +++-- RAM config
+                                        ;		0 = 0123
+                                        ;		1 = 0127
+                                        ;		2 = 4567
+                                        ;		3 = 0327
+                                        ;		4 = 0423
+                                        ;		5 = 0523
+                                        ;		6 = 0623
+                                        ;		7 = 0723
+
+_RAM_CONFIG_H	.equ	(_RAM_CONFIG_L << 8)
+
+; *** PPI - Intel 8255 Programmable Peripheral Interface ***
+
+_PPI_PORT_A_L	.equ	$F4		; pppppppp
+					; ||||||||
+					; ++++++++-- PSG data
+_PPI_PORT_A_H	.equ	(_PPI_PORT_A_L << 8)
+
+_PPI_PORT_B_L	.equ	$F5		; cpxrbbbv
+					; ||||||||
+					; |||||||+-- CRTC VSync
+					; ||||+++--- Brand
+					; ||||		0 = Isp (unused)
+					; ||||		1 = Triumph (unused)
+					; ||||		2 = Saisho (unused)
+					; ||||		2 = Solavox (unused)
+					; ||||		4 = Awa
+					; ||||		5 = Schneider
+					; ||||		6 = Orion
+					; ||||		7 = Amstrad
+					; |||+------ Region. 1 = PAL, 0 = NTSC
+					; ||+------- Expansion port /EXP pin
+					; |+-------- Printer ready. 0 = Ready
+					; +--------- Cassette data in
+_PPI_PORT_B_H	.equ	(_PPI_PORT_B_L << 8)
+
+_PPI_PORT_C_L	.equ	$F6		; ppcmkkkk
+					; ||||||||
+					; ||||++++-- Keyboard row to scan
+					; |||+------ Cassette motor. 1 = On
+					; ||+------- Cassette data out
+					; ++-------- PSG mode
+					;		00 = inactive
+					;		01 = read
+					;		10 = write
+					;		11 = control
+_PPI_PORT_C_H	.equ	(_PPI_PORT_C_L << 8)
+
+_PPI_CONTROL_L	.equ	$F7		; 0...bbbv
+					;     ||||
+					;     |||+-- Bit value to be written
+					;     +++--- Bit selection in port C
+
+					; 1xxaumbc
+					;  |||||||
+					;  ||||||+-- Port CL direction. 1 = In
+					;  |||||+--- Port B direction. 1 = In
+					;  ||||+---- Ports B+CL Mode
+					;  |||+----- Port CH direction. 1 = In
+					;  ||+------ Port A direction. 1 = In
+					;  ++------- Ports A+CH Mode
+_PPI_CONTROL_H	.equ	(_PPI_CONTROL_L << 8)
+
+; TODO!!!
+
+; #############################################################################
+; #############################################################################
+; ###                                                                       ###
+; ###                                                                       ###
+; ###                        Hardware Initialization                        ###
+; ###                                                                       ###
+; ###                                                                       ###
+; #############################################################################
+; #############################################################################
+
+InitHW:
+; *** First, disable interrupts, so that the firmware is out of the way ***
+	DI
+
+; *** Set PPI to default mode (AB in, C out, all mode 0) ***
+	LD	BC,_PPI_CONTROL_H + 10010010b
+        OUT	(C),C		; technically OUT (BC),C, address LSB ignored
+
+; *** Set the CPU to Interrupt Mode 1 ***
+	IM	1
+
+; *** Move stack to its proper address ***
+	LD	SP,$C000
+
+; *** Wait for the VSYNC bit to be asserted, to avoid tearing ***
+	LD	B,_PPI_PORT_B_L
+InitWaitVBL:
+	IN	A,(C)		; technically IN A,(BC), address LSB ignored
+	RRCA			; extract low bit into carry
+	JR	NC,InitWaitVBL	; loop until VSYNC bit set
+
+; *** Disable ROMs, switch to mode 1 ***
+	LD	BC,$7F00 + 10001101b
+	OUT	(C),C
+
+; *** Disable 6128 extended RAM ***
+	LD	C,11000000b
+	OUT	(C),C
+
+; *** Black palette ***
+	LD	DE,(00000000b << 8) + 01000000b + $14
+	OUT	(C),D
+	OUT	(C),E
+	INC	D
+	OUT	(C),D
+	OUT	(C),E
+	INC	D
+	OUT	(C),D
+	OUT	(C),E
+	INC	D
+	OUT	(C),D
+	OUT	(C),E
+	LD	D,00010000b
+	OUT	(C),D
+	OUT	(C),E
+
+; *** Program CRTC, 288x224 ***
+	LD	BC,($BC << 8) + 0
+	OUT	(C),C
+	LD	BC,($BD << 8) + 63	; 64 characters per line, do not touch
+	OUT	(C),C
+	LD	BC,($BC << 8) + 1
+	OUT	(C),C
+	LD	BC,($BD << 8) + 32	; 32 visible chars per line, default 40
+	OUT	(C),C
+	LD	BC,($BC << 8) + 2
+	OUT	(C),C
+	LD	BC,($BD << 8) + 42	; 42 hsync start, default 46
+	OUT	(C),C
+	LD	BC,($BC << 8) + 3
+	OUT	(C),C
+	LD	BC,($BD << 8) + $8E	; 8/14 sync durations, do not touch
+	OUT	(C),C
+	LD	BC,($BC << 8) + 4
+	OUT	(C),C
+	LD	BC,($BD << 8) + 38	; 39 lines per screen, do not touch
+	OUT	(C),C
+	LD	BC,($BC << 8) + 5
+	OUT	(C),C
+	LD	BC,($BD << 8) + 0	; 0 extra pixel lines, do not touch
+	OUT	(C),C
+	LD	BC,($BC << 8) + 6
+	OUT	(C),C
+	LD	BC,($BD << 8) + 32	; 32 visible lines per scrn, default 25
+	OUT	(C),C
+	LD	BC,($BC << 8) + 7
+	OUT	(C),C
+	LD	BC,($BD << 8) + 33	; 33 vsync start, default 30
+	OUT	(C),C
+	LD	BC,($BC << 8) + 8
+	OUT	(C),C
+	LD	BC,($BD << 8) + 00b	; no interlace, do not touch
+	OUT	(C),C
+	LD	BC,($BC << 8) + 9
+	OUT	(C),C
+	LD	BC,($BD << 8) + 7	; 8 lines per character, do not touch
+	OUT	(C),C
+	LD	BC,($BC << 8) + 12
+	OUT	(C),C
+	LD	BC,($BD << 8) + $30	; screen starts at address $C000
+	OUT	(C),C
+	LD	BC,($BC << 8) + 13
+	OUT	(C),C
+	LD	BC,($BD << 8) + $00	; screen starts at address $C000
+	OUT	(C),C
+
+
+; *** Basic AY-3-8912 setup - mixer off ***
+	LD	BC,($F4 << 8) + 7
+	OUT	(C),C
+	LD	BC,$F6C0
+	OUT	(C),C
+	LD	BC,$F600
+	OUT	(C),C
+	LD	BC,($F4 << 8) + 0
+	OUT	(C),C
+	LD	BC,$F680
+	OUT	(C),C
+	LD	BC,$F600
+	OUT	(C),C
+
+; *** Turn floppy motors off ***
+	LD	BC,$FA7E
+	XOR	A
+	OUT	(C),A
+
+; #############################################################################
+; #############################################################################
+; ###                                                                       ###
+; ###                                                                       ###
+; ###                        Software Initialization                        ###
+; ###                                                                       ###
+; ###                                                                       ###
+; #############################################################################
+; #############################################################################
+
+
+; #############################################################################
+; #############################################################################
+; ###                                                                       ###
+; ###                                                                       ###
+; ###                               Main Loop                               ###
+; ###                                                                       ###
+; ###                                                                       ###
+; #############################################################################
+; #############################################################################
+
+MainLoop:
+	JP	MainLoop
+
+
+; #############################################################################
+; #############################################################################
+; ###                                                                       ###
+; ###                                                                       ###
+; ###                                 Data                                  ###
+; ###                                                                       ###
+; ###                                                                       ###
+; #############################################################################
+; #############################################################################
+EndCode:
+
+
+EndVars		.equ	EndCode

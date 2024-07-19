@@ -459,7 +459,7 @@ Star:
 ; # # # # # # # # # # # # #
 
 
-	LD	(IX-62),B
+	LD	(IX-62),B	; 5
 	LD	(IX-61),A
 	LD	(IX-60),L
 
@@ -479,10 +479,10 @@ Star:
 	LD	(IX+69),A
 	LD	(IX+70),L
 
-	LD	A,8
-	ADD	IXH
-	LD	IXH,A
-	LD	A,$0F
+	LD	A,8		; 2
+	ADD	IXH		; 2
+	LD	IXH,A		; 2
+	LD	A,$0F		; 2
 
 	LD	(IX-63),H
 	LD	(IX-62),A

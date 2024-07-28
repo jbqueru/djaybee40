@@ -31,7 +31,10 @@
 ;	- Note: rulers at 40, 80 and 120 columns help with source width
 ;
 ;	- Assembler directives are .lowercase
-;	- Mnemomics and registers are lowercase unless otherwise required
+;	- Mnemomics and registers are uppercase when mnemonics are mostly
+;		acronyms and registers are mostly single-letters (e.g. 6502,
+;		8080), lowercase when mnemonics are mostly words and
+;		abbreviations and registers are numbered (e.g. 68000)
 ;	- Global symbols for code are CamelCase
 ;	- Symbols for variables are snake_case
 ;	- Symbols for hardware registers are ALL_CAPS
@@ -343,4 +346,6 @@ Lines:
 	.word	Init
 
 
-; 345678901234567890123456789012345678901234567890123456789012345678901234567890
+; 34567890123456789012345678901234567890
+;					1234567890123456789012345678901234567890
+;										1234567890123456789012345678901234567890

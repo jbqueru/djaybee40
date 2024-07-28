@@ -1,0 +1,347 @@
+; Copyright 2024 Jean-Baptiste M. "JBQ" "Djaybee" Queru
+;
+; This program is free software: you can redistribute it and/or modify
+; it under the terms of the GNU Affero General Public License as
+; published by the Free Software Foundation, either version 3 of the
+; License, or (at your option) any later version.
+;
+; As an added restriction, if you make the program available for
+; third parties to use on hardware you own (or co-own, lease, rent,
+; or otherwise control,) such as public gaming cabinets (whether or
+; not in a gaming arcade, whether or not coin-operated or otherwise
+; for a fee,) the conditions of section 13 will apply even if no
+; network is involved.
+;
+; This program is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+; GNU Affero General Public License for more details.
+;
+; You should have received a copy of the GNU Affero General Public License
+; along with this program. If not, see <https://www.gnu.org/licenses/>.
+;
+; SPDX-License-Identifier: AGPL-3.0-or-later
+
+; Coding style:
+;	- ASCII
+;	- hard tabs, 8 characters wide, except in ASCII art
+;	- 120 columns overall
+;	- Standalone block comments in the first 80 columns
+;	- Code-related block comments allowed in the last 80 columns
+;	- Note: rulers at 40, 80 and 120 columns help with source width
+;
+;	- Assembler directives are .lowercase
+;	- Mnemomics and registers are lowercase unless otherwise required
+;	- Global symbols for code are CamelCase
+;	- Symbols for variables are snake_case
+;	- Symbols for hardware registers are ALL_CAPS
+;	- Related symbols start with the same prefix (so they sort together)
+;	- hexadecimal constants are lowercase ($eaf00d).
+;
+;	- Include but comment out instructions that help readability but
+;		don't do anything (e.g. redundant CLC on 6502 when the carry is
+;		guaranteed already to be clear). The comment symbol should be
+;		where the instruction would be, i.e. not on the first column.
+;		There should be an explanation in a comment.
+;	- Use the full instruction mnemonic when a shortcut would potentially
+;		cause confusion. E.g. use movea instead of move on 680x0 when
+;		the code relies on the flags not getting modified.
+
+	.processor	6502
+
+; ############################
+; ############################
+; ###                      ###
+; ###  Hardware constants  ###
+; ###                      ###
+; ############################
+; ############################
+
+; -------------------------------
+; Start TIA registers
+_TIA_VSYNC	.equ	$00	; ......s.
+				;       |
+                                ;       +-- 1 = vsync on
+
+_TIA_VBLANK	.equ	$01	; gl....b.
+				; ||    |
+				; ||    +-- 1 = vblank on
+				; |+------- 1 = latch I4/I5 (joystick buttons)
+                                ; +-------- 1 = ground I0..I3 (paddle pots)
+
+_TIA_WSYNC	.equ	$02	; ........  write = wait for end of next line
+
+_TIA_RSYNC	.equ	$03	; ........  write = reset horizontal counter
+
+_TIA_NUSIZ0	.equ	$04	; ..ss.nnn
+				;   || |||
+				;   || +++- 101 = double-width
+				;   || +++- 111 = quad-width
+				;   || |||
+				;   || ||+- 1 = close sprite
+				;   || |+-- 1 = medium sprite
+				;   || +--- 1 = wide sprite
+                                ;   ++----- missile width = 1 << ss
+
+_TIA_NUSIZ1	.equ	$05	; see _TIA_NUSIZ0
+
+_TIA_COLUP0	.equ	$06	; cccclll.
+				; |||||||
+				; ||||+++-- luminance
+				; ++++----- color (0 = grey, 1..15 colors)
+
+_TIA_COLUP1	.equ	$07	; see _TIA_COLUP0
+
+_TIA_COLUPF	.equ	$08	; see _TIA_COLUP0
+
+_TIA_COLUBK	.equ	$09	; see _TIA_COLUP0
+
+_TIA_CTRLPF	.equ	$0A	; see _TIA_COLUP0
+
+_TIA_REFP0	.equ	$0B
+_TIA_REFP1	.equ	$0C
+_TIA_PF0	.equ	$0D
+_TIA_PF1	.equ	$0E
+_TIA_PF2	.equ	$0F
+_TIA_RESP0	.equ	$10
+_TIA_RESP1	.equ	$11
+_TIA_RESM0	.equ	$12
+_TIA_RESM1	.equ	$13
+_TIA_RESBL	.equ	$14
+_TIA_AUDC0	.equ	$15
+_TIA_AUDC1	.equ	$16
+_TIA_AUDF0	.equ	$17
+_TIA_AUDF1	.equ	$18
+_TIA_AUDV0	.equ	$19
+_TIA_AUDV1	.equ	$1A
+_TIA_GRP0	.equ	$1B
+_TIA_GRP1	.equ	$1C
+_TIA_ENAM0	.equ	$1D
+_TIA_ENAM1	.equ	$1E
+_TIA_ENABL	.equ	$1F
+_TIA_HMP0	.equ	$20
+_TIA_HMP1	.equ	$21
+_TIA_HMM0	.equ	$22
+_TIA_HMM1	.equ	$23
+_TIA_HMBL	.equ	$24
+_TIA_VDELP0	.equ	$25
+_TIA_VDELP1	.equ	$26
+_TIA_VDELBL	.equ	$27
+_TIA_RESMP0	.equ	$28
+_TIA_RESMP1	.equ	$29
+_TIA_HMOVE	.equ	$2A
+_TIA_HMCLR	.equ	$2B
+_TIA_CXCLR	.equ	$2C
+
+_TIA_CXM0P	.equ	$00
+_TIA_CXM1P	.equ	$01
+_TIA_CXP0FB	.equ	$02
+_TIA_CXP1FB	.equ	$03
+_TIA_CXM0FB	.equ	$04
+_TIA_CXM1FB	.equ	$05
+_TIA_CXBLPF	.equ	$06
+_TIA_CXPPMM	.equ	$07
+_TIA_INPT0	.equ	$08
+_TIA_INPT1	.equ	$09
+_TIA_INPT2	.equ	$0A
+_TIA_INPT3	.equ	$0B
+_TIA_INPT4	.equ	$0C
+_TIA_INPT5	.equ	$0D
+
+_TIA_CO_GRAY	.equ	$00
+_TIA_CO_GOLD	.equ	$10
+_TIA_CO_ORANGE	.equ	$20
+_TIA_CO_BRT_ORG	.equ	$30
+_TIA_CO_PINK	.equ	$40
+_TIA_CO_PURPLE	.equ	$50
+_TIA_CO_PUR_BLU	.equ	$60
+_TIA_CO_BLU_PUR	.equ	$70
+_TIA_CO_BLUE	.equ	$80
+_TIA_CO_LT_BLUE	.equ	$90
+_TIA_CO_TURQ	.equ	$A0
+_TIA_CO_GRN_BLU	.equ	$B0
+_TIA_CO_GREEN	.equ	$C0
+_TIA_CO_YLW_GRN	.equ	$D0
+_TIA_CO_ORG_GRN	.equ	$E0
+_TIA_CO_LT_ORG	.equ	$F0
+
+_TIA_LU_MIN	.equ	$00
+_TIA_LU_V_DARK	.equ	$02
+_TIA_LU_DARK	.equ	$04
+_TIA_LU_M_DARK	.equ	$06
+_TIA_LU_M_LIGHT	.equ	$08
+_TIA_LU_LIGHT	.equ	$0A
+_TIA_LU_V_LIGHT	.equ	$0C
+_TIA_LU_MAX	.equ	$0E
+; End TIA registers
+; -------------------------------
+
+; -------------------------------
+; Start RIOT registers
+_RIOT_DATA_A	.equ	$280
+_RIOT_DDR_A	.equ	$281
+_RIOT_DATA_B	.equ	$282
+_RIOT_DDR_B	.equ	$283
+
+_RIOT_WT1T	.equ	$294
+_RIOT_WT8T	.equ	$295
+_RIOT_WT64T	.equ	$296
+_RIOT_WT1024T	.equ	$297
+
+_RIOT_RTIM	.equ	$284
+; End RIOT registers
+; -------------------------------
+
+
+
+; ####################
+; ####################
+; ###              ###
+; ###  RAM layout  ###
+; ###              ###
+; ####################
+; ####################
+
+; -------------------------------
+; nothing here yet
+
+; still nothing
+; -------------------------------
+
+; ########################
+; ########################
+; ###                  ###
+; ###  Initialization  ###
+; ###                  ###
+; ########################
+; ########################
+
+	.org	$f000
+Init:
+; Set up CPU
+	CLD
+	LDX	#$ff
+	TXS
+
+; Wait a bit, so things can stabilize
+	LDA	#0
+	TAX
+	TAY
+Wait:	INY
+	BNE	Wait
+        INX
+        BNE	Wait
+
+; Clear zero-page (TIA + RAM)
+	TAX
+Clear:	STA	0,X
+	INX
+	BNE	Clear
+
+; ##############################
+; ##############################
+; ###                        ###
+; ###  Main display routine  ###
+; ###                        ###
+; ##############################
+; ##############################
+
+Loop:
+; A line is a WSync followed by other things
+
+; =========================
+; Overscan - 30 lines total
+; =========================
+
+; ---------------------------------------
+; Start overscan line 0			;
+	STA	_TIA_WSYNC		;
+	LDA	#2			;
+	STA	_TIA_VBLANK		; turn display off
+; End overscan line 0			;
+; ---------------------------------------
+
+	.repeat 29
+; ---------------------------------------
+; Start overscan line 1-29		;
+	STA	_TIA_WSYNC		;
+; End overscan line 1-29		;
+; ---------------------------------------
+	.repend
+
+; =====================
+; Vsync - 3 lines total
+; =====================
+
+; ---------------------------------------
+; Start vsync line 0			;
+	STA	_TIA_WSYNC		;
+	LDA	#2			;
+	STA	_TIA_VSYNC		; turn vsync on
+; End vsync line 0			;
+; ---------------------------------------
+
+	.repeat 2
+; ---------------------------------------
+; Start vsync line 1-2			;
+	STA	_TIA_WSYNC		;
+; End vsync line 1-2			;
+; ---------------------------------------
+	.repend
+
+; ======================
+; VBlank - 37 lines total
+; ======================
+
+; ---------------------------------------
+; Start vblank line 0			;
+	STA	_TIA_WSYNC		;
+	LDA	#0			;
+	STA	_TIA_VSYNC		; turn vsync off
+; End vblank line 0			;
+; ---------------------------------------
+
+	.repeat 36
+; ---------------------------------------
+; Start vblank line 1-36		;
+	STA	_TIA_WSYNC		;
+; End vblank line 1-36			;
+; ---------------------------------------
+	.repend
+
+; ========================
+; Active - 192 lines total
+; ========================
+
+; ---------------------------------------
+; Start active line 0			;
+	STA	_TIA_WSYNC		;
+	LDA	#0			;
+	STA	_TIA_VBLANK		; turn display on
+	LDY	#190
+; End active line 0			;
+; ---------------------------------------
+
+Lines:
+; ---------------------------------------
+; Start active lines 1-190		;
+	STA	_TIA_WSYNC		;
+	DEY				;
+        BNE	Lines			;
+; End active lines 1-190			;
+; ---------------------------------------
+
+; ---------------------------------------
+; Start active line 191		;	;
+	STA	_TIA_WSYNC		;
+	JMP	Loop			;
+; End active line 191			;
+; ---------------------------------------
+
+; Reset / Start vectors
+	.org	$fffc
+	.word	Init
+	.word	Init
+
+
+; 345678901234567890123456789012345678901234567890123456789012345678901234567890

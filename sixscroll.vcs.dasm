@@ -60,46 +60,46 @@
 ; ############################
 ; ############################
 
-; -------------------------------
+; ---------------------------------------
 ; Start TIA registers
-_TIA_VSYNC	.equ	$00	; ......s.
-				;       |
-                                ;       +-- 1 = vsync on
+_TIA_VSYNC	.equ	$00		; ......s.
+					;       |
+                                	;       +-- 1 = vsync on
 
-_TIA_VBLANK	.equ	$01	; gl....b.
-				; ||    |
-				; ||    +-- 1 = vblank on
-				; |+------- 1 = latch I4/I5 (joystick buttons)
-                                ; +-------- 1 = ground I0..I3 (paddle pots)
+_TIA_VBLANK	.equ	$01		; gl....b.
+					; ||    |
+					; ||    +-- 1 = vblank on
+					; |+------- 1 = latch I4/I5 (joystick buttons)
+                                	; +-------- 1 = ground I0..I3 (paddle pots)
 
-_TIA_WSYNC	.equ	$02	; ........  write = wait for end of next line
+_TIA_WSYNC	.equ	$02		; ........  write = wait for end of next line
 
-_TIA_RSYNC	.equ	$03	; ........  write = reset horizontal counter
+_TIA_RSYNC	.equ	$03		; ........  write = reset horizontal counter
 
-_TIA_NUSIZ0	.equ	$04	; ..ss.nnn
-				;   || |||
-				;   || +++- 101 = double-width
-				;   || +++- 111 = quad-width
-				;   || |||
-				;   || ||+- 1 = close sprite
-				;   || |+-- 1 = medium sprite
-				;   || +--- 1 = wide sprite
-                                ;   ++----- missile width = 1 << ss
+_TIA_NUSIZ0	.equ	$04		; ..ss.nnn
+					;   || |||
+					;   || +++- 101 = double-width
+					;   || +++- 111 = quad-width
+					;   || |||
+					;   || ||+- 1 = close sprite
+					;   || |+-- 1 = medium sprite
+					;   || +--- 1 = wide sprite
+                                	;   ++----- missile width = 1 << ss
 
-_TIA_NUSIZ1	.equ	$05	; see _TIA_NUSIZ0
+_TIA_NUSIZ1	.equ	$05		; see _TIA_NUSIZ0
 
-_TIA_COLUP0	.equ	$06	; cccclll.
-				; |||||||
-				; ||||+++-- luminance
-				; ++++----- color (0 = grey, 1..15 colors)
+_TIA_COLUP0	.equ	$06		; cccclll.
+					; |||||||
+					; ||||+++-- luminance
+					; ++++----- color (0 = grey, 1..15 colors)
 
-_TIA_COLUP1	.equ	$07	; see _TIA_COLUP0
+_TIA_COLUP1	.equ	$07		; see _TIA_COLUP0
 
-_TIA_COLUPF	.equ	$08	; see _TIA_COLUP0
+_TIA_COLUPF	.equ	$08		; see _TIA_COLUP0
 
-_TIA_COLUBK	.equ	$09	; see _TIA_COLUP0
+_TIA_COLUBK	.equ	$09		; see _TIA_COLUP0
 
-_TIA_CTRLPF	.equ	$0A	; see _TIA_COLUP0
+_TIA_CTRLPF	.equ	$0A		; see _TIA_COLUP0
 
 _TIA_REFP0	.equ	$0B
 _TIA_REFP1	.equ	$0C

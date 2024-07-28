@@ -247,7 +247,6 @@ Clear:	STA	0,X
 ; ##############################
 
 Loop:
-; A line is a WSync followed by other things
 
 ; =========================
 ; Overscan - 30 lines total
@@ -318,7 +317,7 @@ Loop:
 	STA	_TIA_WSYNC		;
 	LDA	#0			;
 	STA	_TIA_VBLANK		; turn display on
-	LDY	#190
+	LDY	#190			;
 ; End active line 0			;
 ; ---------------------------------------
 
@@ -328,11 +327,11 @@ Lines:
 	STA	_TIA_WSYNC		;
 	DEY				;
         BNE	Lines			;
-; End active lines 1-190			;
+; End active lines 1-190		;
 ; ---------------------------------------
 
 ; ---------------------------------------
-; Start active line 191		;	;
+; Start active line 191			;
 	STA	_TIA_WSYNC		;
 	JMP	Loop			;
 ; End active line 191			;
